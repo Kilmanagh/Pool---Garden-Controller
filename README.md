@@ -12,10 +12,29 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 * **Safe relay defaults:** All valves are `inverted: true` and `restore_mode: ALWAYS_OFF` so reboot and power recovery default to valves off.
 * **Autofill timeout protection:** Valve 1 starts a restart-safe timeout guard and shuts off automatically when the configured run limit is exceeded.
 * **Optional flow-based protection:** If the flow sensor is connected and reporting, Valve 1 also enforces a no-flow / low-flow shutdown after a configurable startup grace period.
-* **Daily water totalization:** Water use is tracked with `pulse_meter` totalization and reset to zero at midnight.
+* **Daily water totalization:** Water use is tracked with `pulse_meter` totalization and reset to zero at midnight using Home Assistant time.
 * **Freeze warning:** Ambient temperature drives a local binary freeze warning using a configurable threshold.
 * **Startup readiness checks:** Valve starts are blocked until the temperature probes are reporting. Flow monitoring becomes active automatically once the flow sensor is wired and publishing state.
 * **Runtime observability:** Tracks Wi-Fi state, API state, disconnect counters, boot count, heap health, reset reason, and an aggregated device health summary.
+
+---
+
+## Requirements Status
+
+### Implemented
+
+* Static local network configuration with fallback AP.
+* Dual DS18B20 temperature monitoring on `GPIO4`.
+* Four inverted relay outputs on `GPIO16` through `GPIO19` with safe boot defaults.
+* Valve 1 timeout protection with configurable runtime.
+* Local freeze warning flag with configurable threshold.
+* Flow-based daily water tracking and no-flow protection when the flow sensor is installed.
+* Local diagnostics for Wi-Fi/API state, reset reason, memory, uptime, and device health.
+
+### Still Open Against The Original Brief
+
+* Midnight daily reset still uses Home Assistant time. That means the water-total reset is not yet fully independent of Home Assistant connectivity.
+* The current configuration supports running without the flow sensor installed, but the original project brief assumes that sensor is part of the final hardware.
 
 ---
 
@@ -24,7 +43,7 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 | Component | ESP32 Pin | Logic Profile | Physical / Electrical Description |
 | :--- | :--- | :--- | :--- |
 | **Dallas 1-Wire Bus** | `GPIO4` | Bus Master | Connects to dual **DS18B20** waterproof probes (Pool & Air) |
-| **Water Flow Sensor** | `GPIO5` | Pulse Input | Connected to an inline **YF-B5 (DN20)** Brass Hall-Effect sensor |
+| **Water Flow Sensor** | `GPIO27` | Pulse Input | Connected to an inline **DN20 / 3/4 NPT brass hall-effect water flow sensor** |
 | **Pool Valve 1** | `GPIO16` | Active LOW | Relay 1 — Dedicated Pool Auto-Fill line with safety interlocks |
 | **Garden Valve 2** | `GPIO17` | Active LOW | Relay 2 — Garden Zone 1 |
 | **Garden Valve 3** | `GPIO18` | Active LOW | Relay 3 — Garden Zone 2 |
@@ -58,15 +77,45 @@ Orbit valves use a **24V AC** solenoid coil. The ESP32 does not drive the valves
        | Dedicated Remaining Valve Wire   | <--+ (Completes the AC loop)
        +----------------------------------+
 
-### 2. Optional Flow Sensor Interface (`GPIO5`)
+### 2. Optional Flow Sensor Interface (`GPIO27`)
 
-The **YF-B5 / DN20** flow sensor is optional in the current configuration. If it is not connected, the controller still runs, but Valve 1 no-flow protection and daily water tracking remain inactive.
+The controller is compatible with the common **DN20 / 3/4 NPT brass hall-effect flow sensor** class, including parts sold as **1-30 L/min**, **DC 5-15V**, and similar to the Lazyfun unit you referenced. If it is not connected, the controller still runs, but Valve 1 no-flow protection and daily water tracking remain inactive.
 
-* **Red:** `5V DC`
-* **Black:** `GND`
-* **Signal:** `GPIO5`
+Recommended safe wiring for this sensor class:
 
-`GPIO5` is a strapping pin on ESP32 hardware. ESPHome will warn about it during validation, so avoid adding external pull resistors that could interfere with boot.
+* **Red:** Sensor power to `5V DC`
+* **Black:** Sensor ground to `GND`
+* **Yellow / Signal:** Sensor signal to a resistor divider, then to `GPIO27`
+* **Common ground:** ESP32 ground and sensor ground must be tied together
+
+`GPIO27` is still the right ESP32 pin for the signal wire. It is a safer general-purpose input than `GPIO5`, which was previously used and is a strapping pin.
+
+For the common DN20 1-30 L/min hall sensors, the safest assumption is that the output high level can be near the sensor supply voltage when powered from `5V`. That means the signal should be treated as a `5V` pulse unless you personally verify otherwise with a meter or datasheet.
+
+Recommended divider:
+
+* Sensor signal to `10k` resistor
+* Other side of that resistor to `GPIO27`
+* `GPIO27` to `20k` resistor
+* Other side of the `20k` resistor to `GND`
+
+That scales a `5V` pulse down to about `3.3V`, which is appropriate for the ESP32 input.
+
+Simple wiring diagram:
+
+```text
+Sensor red    -> 5V
+Sensor black  -> GND
+Sensor yellow -> 10k resistor -> GPIO27
+GPIO27        -> 20k resistor -> GND
+ESP32 GND     -> same GND as sensor
+```
+
+If you later prove that your exact sensor output is open-collector and only needs a pull-up, you can simplify the wiring. Until then, the divider is the safer default.
+
+The advertised `DC 5-15V` operating range is acceptable for the sensor power input, but it does **not** guarantee that the signal output is automatically safe for a `3.3V` MCU input.
+
+The current flow conversion constants are a starting point only. Expect to tune `Water Flow Rate` and `Combined Daily Water Consumption` against real measured water volume once the sensor is installed.
 
 ---
 
@@ -90,11 +139,12 @@ The **YF-B5 / DN20** flow sensor is optional in the current configuration. If it
 
 ### Stage 3: Flow Sensor Integration
 
-1. Wire the flow sensor to `5V`, `GND`, and `GPIO5`.
+1. Wire the flow sensor to `5V`, `GND`, and `GPIO27` through the documented `10k/20k` resistor divider.
 2. Confirm `Pool Auto Fill Flow Monitor Ready` changes on once the sensor is publishing.
 3. Run water through the line and verify `Water Flow Rate` and `Combined Daily Water Consumption` update.
 4. Tune `Auto Fill Flow Start Delay` and `Auto Fill Minimum Flow Rate` using real readings.
-5. Confirm Valve 1 now trips `Pool Auto Fill Flow Fault` if the valve opens without valid flow.
+5. Calibrate the flow conversion against a known water volume, because marketplace listings for DN20 hall sensors often omit or misstate the pulse constant.
+6. Confirm Valve 1 now trips `Pool Auto Fill Flow Fault` if the valve opens without valid flow.
 
 ## Dashboard Controls And Telemetry
 

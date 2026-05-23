@@ -278,9 +278,12 @@ sensor:
                   id: freeze_warning_status
                   state: OFF
 
-  # Sensor 3: Brass Water Flow Sensor SPEED (GPIO5)
+  # Sensor 3: DN20 3/4 NPT brass hall-effect water flow sensor input (GPIO27 via divider)
   - platform: pulse_meter
-    pin: GPIO5
+    pin:
+      number: GPIO27
+      mode:
+        input: true
     name: "Water Flow Rate"
     id: autofill_flow_rate
     timeout: 10s
