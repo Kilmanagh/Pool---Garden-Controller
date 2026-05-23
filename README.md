@@ -101,6 +101,13 @@ Recommended divider:
 
 That scales a `5V` pulse down to about `3.3V`, which is appropriate for the ESP32 input.
 
+Practical resistor alternatives that also work:
+
+* **Preferred if you have these on hand:** `4.7k` from sensor signal to `GPIO27`, and `10k` from `GPIO27` to `GND`
+* **Also acceptable:** `10k` from sensor signal to `GPIO27`, and two `10k` resistors in series from `GPIO27` to `GND` to make `20k`
+
+The `4.7k` and `10k` option scales a `5V` pulse to about `3.4V`, which is close enough for this use and is a practical off-the-shelf pairing.
+
 Simple wiring diagram:
 
 ```text
@@ -109,6 +116,22 @@ Sensor black  -> GND
 Sensor yellow -> 10k resistor -> GPIO27
 GPIO27        -> 20k resistor -> GND
 ESP32 GND     -> same GND as sensor
+
+
+                    DN20 Flow Sensor                       ESP32
+                 +------------------+              +----------------+
+                 |                  |              |                |
+5V  ------------>| Red / VCC        |              |                |
+                 |                  |              |                |
+GND -------------+ Black / GND      +--------------+ GND            |
+                 |                  |              |                |
+                 | Yellow / Signal  +---[ 10k ]----+ GPIO27         |
+                 +------------------+              |      |         |
+                                                   |    [ 20k ]     |
+                                                   |      |         |
+                                                   +------+---------+
+                                                          |
+                                                         GND
 ```
 
 If you later prove that your exact sensor output is open-collector and only needs a pull-up, you can simplify the wiring. Until then, the divider is the safer default.
