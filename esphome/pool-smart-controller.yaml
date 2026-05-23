@@ -151,6 +151,7 @@ number:
     initial_value: 20
     unit_of_measurement: "min"
     optimistic: true
+    restore_value: true
 
   # Grace period before declaring a no-flow fault after opening the autofill valve
   - platform: template
@@ -163,6 +164,7 @@ number:
     initial_value: 20
     unit_of_measurement: "s"
     optimistic: true
+    restore_value: true
 
   # Minimum measured flow that counts as a valid autofill run
   - platform: template
@@ -175,6 +177,7 @@ number:
     initial_value: 0.2
     unit_of_measurement: "GPM"
     optimistic: true
+    restore_value: true
 
   # Slider to adjust the Freeze Warning temperature trigger
   - platform: template
@@ -187,6 +190,7 @@ number:
     initial_value: 34
     unit_of_measurement: "°F"
     optimistic: true
+    restore_value: true
 
 script:
   - id: valve_1_timeout_guard
@@ -401,7 +405,6 @@ binary_sensor:
   - platform: template
     name: "Pool Controller Self-Test Ready"
     id: controller_self_test_ready
-    device_class: problem
     entity_category: diagnostic
     lambda: |-
       return id(pool_water_temp).has_state()
