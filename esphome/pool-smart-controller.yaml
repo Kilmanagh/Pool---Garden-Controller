@@ -1,0 +1,211 @@
+esphome:
+  name: pool-smart-controller
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+    advanced:
+      minimum_chip_revision: "3.1"
+      sram1_as_iram: true
+
+# --- INTERNAL VOLATILE MEMORY STORAGE ---
+# Creates a safe global variable in memory to hold the exact total pulse count
+globals:
+  - id: total_water_pulses
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+# --- PART 1: LOCAL-ONLY NETWORK CREDENTIALS ---
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  
+  manual_ip:
+    static_ip: 10.7.0.2
+    gateway: 10.7.0.2
+    subnet: 255.0.0.0
+
+  ap:
+    ssid: "Pool-Controller-Fallback"
+
+captive_portal:
+logger:
+api:
+
+ota:
+  - platform: esphome
+
+web_server:
+  port: 80
+
+# --- PART 2: TIME COMPONENT FOR MIDNIGHT RESET ---
+# Syncs local time from Home Assistant to wipe out the daily total at midnight
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+    on_time:
+      - seconds: 0
+        minutes: 0
+        hours: 0
+        then:
+          - lambda: 'id(total_water_pulses) = 0;'
+
+# --- PART 3: HARDWARE DRIVERS & INPUT SLIDERS ---
+one_wire:
+  - platform: gpio
+    pin: GPIO4
+
+number:
+  # Slider to adjust the Auto Fill maximum run duration
+  - platform: template
+    name: "Auto Fill Max Run Time"
+    id: autofill_timeout_setting
+    icon: "mdi:clock-end"
+    min_value: 1
+    max_value: 120
+    step: 1
+    initial_value: 20
+    unit_of_measurement: "min"
+    optimistic: true
+
+  # Slider to adjust the Freeze Warning temperature trigger
+  - platform: template
+    name: "Freeze Warning Threshold"
+    id: freeze_threshold_setting
+    icon: "mdi:thermometer-snowflake"
+    min_value: 30
+    max_value: 45
+    step: 1
+    initial_value: 34
+    unit_of_measurement: "°F"
+    optimistic: true
+
+# --- PART 4: TEMPERATURE, TELEMETRY & WATER FLOW ENGINE ---
+sensor:
+  # Sensor 1: Physical Pool Water Probe
+  - platform: dallas_temp
+    address: 0xaa000000127b0928
+    name: "Pool Water Temperature"
+    update_interval: 30s
+    unit_of_measurement: "°F"
+    accuracy_decimals: 1
+    filters:
+      - lambda: return x * 1.8 + 32.0;
+
+  # Sensor 2: Physical Ambient Air Probe
+  - platform: dallas_temp
+    address: 0x3e000000156d5d28
+    name: "Pool Equipment Ambient Temperature"
+    id: ambient_air_temp
+    update_interval: 30s
+    unit_of_measurement: "°F"
+    accuracy_decimals: 1
+    filters:
+      - lambda: return x * 1.8 + 32.0;
+    on_value:
+      then:
+        - if:
+            condition:
+              lambda: |-
+                return id(ambient_air_temp).state <= id(freeze_threshold_setting).state;
+            then:
+              - binary_sensor.template.publish:
+                  id: freeze_warning_status
+                  state: ON
+            else:
+              - binary_sensor.template.publish:
+                  id: freeze_warning_status
+                  state: OFF
+
+  # Sensor 3: Brass Water Flow Sensor SPEED (GPIO5)
+  - platform: pulse_counter
+    pin: GPIO5
+    name: "Water Flow Rate"
+    id: autofill_flow_rate
+    update_interval: 6s
+    # Every time the counter runs, it updates our local raw pulse variable
+    on_raw_value:
+      then:
+        - lambda: 'id(total_water_pulses) += x;'
+    filters:
+      - multiply: 0.04015
+    unit_of_measurement: "GPM"
+    accuracy_decimals: 1
+
+  # Sensor 4: Total Water Volume (Calculated from accumulated raw pulses)
+  - platform: template
+    name: "Combined Daily Water Consumption"
+    id: daily_water_total
+    update_interval: 6s
+    unit_of_measurement: "gal"
+    accuracy_decimals: 1
+    icon: "mdi:water-meter"
+    # Divides total raw pulses by the YF-B5's exact hardware pulse-per-gallon constant
+    lambda: 'return (float)id(total_water_pulses) / 25000.0;'
+
+  # Diagnostic 5: Tracks Wi-Fi Signal Strength in Decibels (dBm)
+  - platform: wifi_signal
+    name: "Pool Controller Wi-Fi Signal"
+    update_interval: 60s
+
+  # Diagnostic 6: Monitors how long the board has been powered on
+  - platform: uptime
+    name: "Pool Controller Uptime"
+    update_interval: 5min
+
+  # Diagnostic 7: Tracks the real-time heat of the ESP32 processor silicon
+  - platform: internal_temperature
+    name: "Pool Controller Internal Chip Temp"
+    unit_of_measurement: "°F"
+    update_interval: 60s
+    filters:
+      - lambda: return x * 1.8 + 32.0;
+
+# --- PART 5: SYSTEM STATUS & TELEMETRY ---
+binary_sensor:
+  - platform: template
+    name: "Pool Equipment Freeze Warning"
+    id: freeze_warning_status
+    device_class: cold
+    icon: "mdi:snowflake-alert"
+
+text_sensor:
+  - platform: version
+    name: "Pool Controller ESPHome Version"
+
+# --- PART 6: THE 4 ACTIVE VALVE SWITCHES ---
+switch:
+  - platform: gpio
+    pin: GPIO16
+    name: "Pool Valve 1"
+    id: valve_1
+    inverted: true
+    on_turn_on:
+      then:
+        - delay: !lambda "return id(autofill_timeout_setting).state * 60000;"
+        - if:
+            condition:
+              switch.is_on: valve_1
+            then:
+              - switch.turn_off: valve_1
+              - logger.log: "Safety Protocol: Valve 1 run time exceeded limit. Automatically shut off."
+
+  - platform: gpio
+    pin: GPIO17
+    name: "Garden Valve 2"
+    id: valve_2
+    inverted: true
+
+  - platform: gpio
+    pin: GPIO18
+    name: "Garden Valve 3"
+    id: valve_3
+    inverted: true
+
+  - platform: gpio
+    pin: GPIO19
+    name: "Garden Valve 4"
+    id: valve_4
+    inverted: true
