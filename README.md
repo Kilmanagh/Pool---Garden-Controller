@@ -1,21 +1,23 @@
-# 🏊‍♂️ Smart Pool & Garden Irrigation Controller
+# Smart Pool & Garden Irrigation Controller
 
-An autonomous, ultra-reliable local automation hub built on an **ESP32 microcontroller** using the **ESPHome** framework under **ESP-IDF**. This system controls real-time pool and ambient temperatures, handles a high-speed brass volumetric water flow meter, and interfaces directly with a 4-channel relay board to safely drive 24V AC Orbit irrigation valves. 
-
----
-
-## 🛠️ System Features
-
-*   **🔒 Local-Only Operations:** Completely stripped of cloud dependencies. Operates on a dedicated static IP (`10.7.0.2`) for immediate boot recovery and offline local API performance.
-*   **📡 Resilient Fallback Network:** Automatically deploys an ad-hoc captive portal wireless Access Point (`Pool-Controller-Fallback`) if the primary network drops.
-*   **🚰 On-Chip Volumetric Tracking:** Bypasses framework bugs by using a native C++ variable pulse accumulator to track **Combined Daily Water Consumption** in exact gallons across all zones, automatically wiping back to `0.0 gal` at midnight.
-*   **🛡️ Fail-Safe Hardware Mapping:** Every valve switch utilizes digital inversion (`inverted: true`). If the chip loses power, crashes, or reboots, the physical loops default to a state that keeps your valves **Closed**, preventing yard flooding.
-*   **⏱️ Auto-Fill Runaway Protection:** Includes an autonomous runtime protective interlock loop. If the pool fill line is left open, it drops into a localized countdown script that automatically closes the valve at a threshold pulled directly from your dashboard slider.
-*   **❄️ Dynamic Freeze Alert Engine:** Real-time evaluation of the physical air sensor against an adjustable temperature slider. Drops into an active warning state if temperatures threaten outdoor plumbing.
+An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-IDF**. It monitors pool and ambient temperature, drives a 4-channel relay board for 24V AC Orbit irrigation valves, and supports optional inline flow monitoring for pool autofill protection and daily water usage tracking.
 
 ---
 
-## 📌 Pinout & Hardware Architecture
+## System Features
+
+* **Local-only operation:** Uses a fixed local IP of `10.7.0.2` and a self-referential gateway for isolated network use.
+* **Fallback access point:** Exposes `Pool-Controller-Fallback` if the main Wi-Fi connection is unavailable.
+* **Safe relay defaults:** All valves are `inverted: true` and `restore_mode: ALWAYS_OFF` so reboot and power recovery default to valves off.
+* **Autofill timeout protection:** Valve 1 starts a restart-safe timeout guard and shuts off automatically when the configured run limit is exceeded.
+* **Optional flow-based protection:** If the flow sensor is connected and reporting, Valve 1 also enforces a no-flow / low-flow shutdown after a configurable startup grace period.
+* **Daily water totalization:** Water use is tracked with `pulse_meter` totalization and reset to zero at midnight.
+* **Freeze warning:** Ambient temperature drives a local binary freeze warning using a configurable threshold.
+* **Startup readiness checks:** Valve starts are blocked until the temperature probes are reporting. Flow monitoring becomes active automatically once the flow sensor is wired and publishing state.
+
+---
+
+## Pinout & Hardware Architecture
 
 | Component | ESP32 Pin | Logic Profile | Physical / Electrical Description |
 | :--- | :--- | :--- | :--- |
@@ -26,12 +28,11 @@ An autonomous, ultra-reliable local automation hub built on an **ESP32 microcont
 | **Garden Valve 3** | `GPIO18` | Active LOW | Relay 3 — Garden Zone 2 |
 | **Garden Valve 4** | `GPIO19` | Active LOW | Relay 4 — Garden Zone 3 |
 
----
+## Wiring Notes
 
-## ⚡ Wiring Blueprint
+### 1. 24V AC Valve Switching Loop
 
-### 1. The 24V AC Valve Switching Loop
-Orbit valves utilize a **24V Alternating Current** solenoid coil. Because the ESP32 operates purely on Direct Current (DC), the mechanical relay channels act as isolated dry contact switches to bridge the two lines safely:
+Orbit valves use a **24V AC** solenoid coil. The ESP32 does not drive the valves directly; the relay board acts as the isolated switching layer:
 +-----------------------------------+
               |      24V AC Power Transformer     |
               +-----------------------------------+
@@ -55,20 +56,75 @@ Orbit valves utilize a **24V Alternating Current** solenoid coil. Because the ES
        | Dedicated Remaining Valve Wire   | <--+ (Completes the AC loop)
        +----------------------------------+
 
- ## 2. High-Speed Flow Sensor Interface (`GPIO5`)
-The **YF-B5 Brass Flow Sensor** monitors real-time velocity. It operates perfectly using the 5V rail off your primary project power distribution block.
-*   🔴 **Red:** Connect to **5V DC**
-*   ⚫ **Black:** Connect to **GND**
-*   🟡 **Yellow/Blue (Signal):** Connect directly to **GPIO5** 
-*(Note: The ESP32's internal hardware layout and dev board configuration keep this strapping pin safe from bootloader interference during startup).*
+### 2. Optional Flow Sensor Interface (`GPIO5`)
+
+The **YF-B5 / DN20** flow sensor is optional in the current configuration. If it is not connected, the controller still runs, but Valve 1 no-flow protection and daily water tracking remain inactive.
+
+* **Red:** `5V DC`
+* **Black:** `GND`
+* **Signal:** `GPIO5`
+
+`GPIO5` is a strapping pin on ESP32 hardware. ESPHome will warn about it during validation, so avoid adding external pull resistors that could interfere with boot.
 
 ---
 
-## 🎛️ Local Dashboard Controls Reference
+## Hardware Bring-Up Checklist
 
-*   **Pool Water Temperature (`sensor`):** Direct hardware evaluation of Dallas probe `0xaa000000127b0928`.
-*   **Pool Equipment Ambient Temperature (`sensor`):** Direct hardware evaluation of Dallas probe `0x3e000000156d5d28`.
-*   **Auto Fill Max Run Time (`number`):** Slider (1 to 120 minutes) setting the safety cutoff threshold for `valve_1`.
-*   **Freeze Warning Threshold (`number`):** Slider (30°F to 45°F) evaluating the runtime trigger point for environmental alerts.
-*   **Water Flow Rate (`sensor`):** Tracks realtime fluid speed in Gallons Per Minute (GPM). Uses a conversion filter of `0.04015` optimized for the YF-B5 scale.
-*   **Combined Daily Water Consumption (`sensor`):** Calculated accumulation of total gallons pushed through the sensor pipe array across all 4 zones.
+### Stage 1: Base Controller
+
+1. Wire the ESP32, relay board, power, and both DS18B20 probes.
+2. Flash the configuration and confirm Wi-Fi, API, and fallback AP behavior.
+3. Verify `Pool Water Temperature` and `Pool Equipment Ambient Temperature` are both reporting.
+4. Confirm `Pool Controller Self-Test Ready` turns on.
+5. Test each relay output with the valves disconnected or otherwise made safe.
+
+### Stage 2: Pool Autofill Safety
+
+1. Connect Valve 1 and confirm it turns off after the configured `Auto Fill Max Run Time`.
+2. Verify `Pool Valve 1 Last Stop Reason` changes to `timeout` when the timeout guard trips.
+3. Check that a manual shutoff leaves the last-stop reason as `manual_off`.
+
+### Stage 3: Flow Sensor Integration
+
+1. Wire the flow sensor to `5V`, `GND`, and `GPIO5`.
+2. Confirm `Pool Auto Fill Flow Monitor Ready` changes on once the sensor is publishing.
+3. Run water through the line and verify `Water Flow Rate` and `Combined Daily Water Consumption` update.
+4. Tune `Auto Fill Flow Start Delay` and `Auto Fill Minimum Flow Rate` using real readings.
+5. Confirm Valve 1 now trips `Pool Auto Fill Flow Fault` if the valve opens without valid flow.
+
+## Dashboard Controls And Telemetry
+
+### Controls
+
+* **Auto Fill Max Run Time:** Timeout threshold for Valve 1, from 1 to 120 minutes.
+* **Auto Fill Flow Start Delay:** Grace period before no-flow protection evaluates Valve 1.
+* **Auto Fill Minimum Flow Rate:** Minimum valid autofill flow in GPM before Valve 1 is treated as a flow fault.
+* **Freeze Warning Threshold:** Ambient freeze-warning threshold in degrees Fahrenheit.
+
+### Sensors
+
+* **Pool Water Temperature:** Pool probe reading.
+* **Pool Equipment Ambient Temperature:** Ambient equipment-area probe reading.
+* **Water Flow Rate:** Real-time flow in GPM when the sensor is connected.
+* **Combined Daily Water Consumption:** Daily gallon total from the flow sensor when connected.
+* **Pool Controller Wi-Fi Signal:** Wi-Fi RSSI in dBm.
+* **Pool Controller Uptime:** Controller uptime.
+* **Pool Controller Internal Chip Temp:** ESP32 internal temperature.
+
+### Safety And Status Entities
+
+* **Pool Equipment Freeze Warning:** Set when ambient temperature falls below the configured threshold.
+* **Pool Controller Self-Test Ready:** True when the two temperature probes are available and the controller is safe to start valves.
+* **Pool Controller Self-Test Detail:** Reports `pool_probe_not_ready`, `ambient_probe_not_ready`, `ready_without_flow_sensor`, or `ready`.
+* **Pool Auto Fill Flow Monitor Ready:** True when the flow sensor is connected and publishing state.
+* **Pool Auto Fill Timeout Tripped:** Set when Valve 1 is shut down for timeout.
+* **Pool Auto Fill Flow Fault:** Set when Valve 1 is shut down for low flow or missing flow.
+* **Pool Valve 1 Last Stop Reason:** Latched reason string such as `running`, `manual_off`, `timeout`, `flow_fault`, or `self_test_blocked`.
+
+## Validation
+
+Use the ESPHome CLI to validate the configuration before flashing:
+
+```powershell
+esphome config .\esphome\pool-smart-controller.yaml
+```
