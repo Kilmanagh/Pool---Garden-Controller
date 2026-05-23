@@ -1,5 +1,32 @@
 esphome:
   name: pool-smart-controller
+  friendly_name: Pool Controller
+  comment: Local pool and garden controller
+  project:
+    name: kilmanagh.pool_garden_controller
+    version: "0.2.0"
+  on_boot:
+    priority: -100
+    then:
+      - lambda: |-
+          id(boot_count) += 1;
+          id(wifi_connected_state) = false;
+          id(api_client_count) = 0;
+      - binary_sensor.template.publish:
+          id: wifi_connected
+          state: OFF
+      - binary_sensor.template.publish:
+          id: api_connected
+          state: OFF
+      - binary_sensor.template.publish:
+          id: autofill_timeout_status
+          state: OFF
+      - binary_sensor.template.publish:
+          id: autofill_flow_fault_status
+          state: OFF
+      - text_sensor.template.publish:
+          id: valve_1_last_stop_reason
+          state: "booting"
 
 esp32:
   board: esp32dev
@@ -9,11 +36,79 @@ esp32:
       minimum_chip_revision: "3.1"
       sram1_as_iram: true
 
+globals:
+  - id: boot_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+  - id: wifi_connected_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: wifi_disconnect_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+  - id: api_client_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: api_disconnect_count
+    type: int
+    restore_value: yes
+    initial_value: '0'
+
+logger:
+
+api:
+  on_client_connected:
+    then:
+      - lambda: |-
+          id(api_client_count) += 1;
+      - binary_sensor.template.publish:
+          id: api_connected
+          state: ON
+  on_client_disconnected:
+    then:
+      - lambda: |-
+          if (id(api_client_count) > 0) {
+            id(api_client_count) -= 1;
+          }
+          id(api_disconnect_count) += 1;
+      - binary_sensor.template.publish:
+          id: api_connected
+          state: !lambda 'return id(api_client_count) > 0;'
+
+ota:
+  - platform: esphome
+
+web_server:
+  port: 80
+
+debug:
+  update_interval: 30s
+
 # --- PART 1: LOCAL-ONLY NETWORK CREDENTIALS ---
 wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
-  
+  reboot_timeout: 0s
+  on_connect:
+    then:
+      - lambda: |-
+          id(wifi_connected_state) = true;
+      - binary_sensor.template.publish:
+          id: wifi_connected
+          state: ON
+  on_disconnect:
+    then:
+      - lambda: |-
+          id(wifi_connected_state) = false;
+          id(wifi_disconnect_count) += 1;
+      - binary_sensor.template.publish:
+          id: wifi_connected
+          state: OFF
+
   manual_ip:
     static_ip: 10.7.0.2
     gateway: 10.7.0.2
@@ -21,16 +116,9 @@ wifi:
 
   ap:
     ssid: "Pool-Controller-Fallback"
+    password: !secret fallback_ap_password
 
 captive_portal:
-logger:
-api:
-
-ota:
-  - platform: esphome
-
-web_server:
-  port: 80
 
 # --- PART 2: TIME COMPONENT FOR MIDNIGHT RESET ---
 # Syncs local time from Home Assistant to wipe out the daily total at midnight
@@ -209,23 +297,101 @@ sensor:
   # Diagnostic 5: Tracks Wi-Fi Signal Strength in Decibels (dBm)
   - platform: wifi_signal
     name: "Pool Controller Wi-Fi Signal"
+    id: wifi_rssi_db
     update_interval: 60s
 
   # Diagnostic 6: Monitors how long the board has been powered on
   - platform: uptime
     name: "Pool Controller Uptime"
+    id: system_uptime_s
     update_interval: 5min
 
   # Diagnostic 7: Tracks the real-time heat of the ESP32 processor silicon
   - platform: internal_temperature
     name: "Pool Controller Internal Chip Temp"
+    id: internal_chip_temp
     unit_of_measurement: "°F"
     update_interval: 60s
     filters:
       - lambda: return x * 1.8 + 32.0;
 
+  - platform: debug
+    free:
+      name: "Pool Controller Heap Free"
+      id: heap_free_bytes
+      unit_of_measurement: "B"
+      entity_category: diagnostic
+    fragmentation:
+      name: "Pool Controller Heap Fragmentation"
+      id: heap_fragmentation_pct
+      unit_of_measurement: "%"
+      entity_category: diagnostic
+    loop_time:
+      name: "Pool Controller Main Loop Time"
+      id: main_loop_time_ms
+      unit_of_measurement: "ms"
+      entity_category: diagnostic
+
+  - platform: template
+    name: "Pool Controller Boot Count"
+    id: boot_count_sensor
+    icon: "mdi:counter"
+    accuracy_decimals: 0
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return (float) id(boot_count);
+
+  - platform: template
+    name: "Pool Controller Wi-Fi Disconnect Count"
+    id: wifi_disconnect_count_sensor
+    icon: "mdi:wifi-alert"
+    accuracy_decimals: 0
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return (float) id(wifi_disconnect_count);
+
+  - platform: template
+    name: "Pool Controller API Client Count"
+    id: api_client_count_sensor
+    icon: "mdi:lan-connect"
+    accuracy_decimals: 0
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return (float) id(api_client_count);
+
+  - platform: template
+    name: "Pool Controller API Disconnect Count"
+    id: api_disconnect_count_sensor
+    icon: "mdi:lan-disconnect"
+    accuracy_decimals: 0
+    state_class: measurement
+    entity_category: diagnostic
+    update_interval: 30s
+    lambda: |-
+      return (float) id(api_disconnect_count);
+
 # --- PART 5: SYSTEM STATUS & TELEMETRY ---
 binary_sensor:
+  - platform: status
+    name: "Pool Controller Status"
+    id: controller_status
+
+  - platform: template
+    name: "Pool Controller Wi-Fi Connected"
+    id: wifi_connected
+    entity_category: diagnostic
+
+  - platform: template
+    name: "Pool Controller API Connected"
+    id: api_connected
+    entity_category: diagnostic
+
   - platform: template
     name: "Pool Equipment Freeze Warning"
     id: freeze_warning_status
@@ -261,9 +427,29 @@ binary_sensor:
     device_class: problem
     icon: "mdi:water-alert"
 
+  - platform: template
+    name: "Pool Controller Memory Warning"
+    id: memory_warning
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      if (!isnan(id(heap_free_bytes).state) && id(heap_free_bytes).state < 20000.0f) {
+        return true;
+      }
+      if (!isnan(id(heap_fragmentation_pct).state) && id(heap_fragmentation_pct).state > 50.0f) {
+        return true;
+      }
+      return false;
+
 text_sensor:
   - platform: version
     name: "Pool Controller ESPHome Version"
+
+  - platform: debug
+    reset_reason:
+      name: "Pool Controller Reset Reason"
+      id: reset_reason_text
+      entity_category: diagnostic
 
   - platform: template
     name: "Pool Controller Self-Test Detail"
@@ -283,10 +469,47 @@ text_sensor:
       return {"ready"};
 
   - platform: template
+    name: "Pool Controller Device Health"
+    id: device_health
+    icon: "mdi:heart-pulse"
+    entity_category: diagnostic
+    update_interval: 15s
+    lambda: |-
+      if (id(system_uptime_s).state < 60.0f) {
+        return {"Recovering After Boot"};
+      }
+      if (!id(controller_status).state) {
+        return {"Controller Offline"};
+      }
+      if (!id(wifi_connected_state)) {
+        return {"WiFi Reconnecting"};
+      }
+      if (id(api_client_count) <= 0) {
+        return {"WiFi OK / API Idle"};
+      }
+      if (!id(controller_self_test_ready).state) {
+        return {"Sensor Trouble"};
+      }
+      if (id(memory_warning).state) {
+        return {"Memory Warning"};
+      }
+      return {"Healthy"};
+
+  - platform: template
     name: "Pool Valve 1 Last Stop Reason"
     id: valve_1_last_stop_reason
     icon: "mdi:message-alert-outline"
     update_interval: never
+
+  - platform: wifi_info
+    ip_address:
+      name: "Pool Controller IP Address"
+    ssid:
+      name: "Pool Controller Wi-Fi SSID"
+
+button:
+  - platform: restart
+    name: "Pool Controller Restart"
 
 # --- PART 6: THE 4 ACTIVE VALVE SWITCHES ---
 switch:

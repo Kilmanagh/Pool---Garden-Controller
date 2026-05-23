@@ -7,13 +7,15 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 ## System Features
 
 * **Local-only operation:** Uses a fixed local IP of `10.7.0.2` and a self-referential gateway for isolated network use.
-* **Fallback access point:** Exposes `Pool-Controller-Fallback` if the main Wi-Fi connection is unavailable.
+* **No forced Wi-Fi reboot loop:** The controller keeps running locally even if the primary SSID is unavailable.
+* **Fallback access point:** Exposes `Pool-Controller-Fallback` if the main Wi-Fi connection is unavailable, protected by its own password.
 * **Safe relay defaults:** All valves are `inverted: true` and `restore_mode: ALWAYS_OFF` so reboot and power recovery default to valves off.
 * **Autofill timeout protection:** Valve 1 starts a restart-safe timeout guard and shuts off automatically when the configured run limit is exceeded.
 * **Optional flow-based protection:** If the flow sensor is connected and reporting, Valve 1 also enforces a no-flow / low-flow shutdown after a configurable startup grace period.
 * **Daily water totalization:** Water use is tracked with `pulse_meter` totalization and reset to zero at midnight.
 * **Freeze warning:** Ambient temperature drives a local binary freeze warning using a configurable threshold.
 * **Startup readiness checks:** Valve starts are blocked until the temperature probes are reporting. Flow monitoring becomes active automatically once the flow sensor is wired and publishing state.
+* **Runtime observability:** Tracks Wi-Fi state, API state, disconnect counters, boot count, heap health, reset reason, and an aggregated device health summary.
 
 ---
 
@@ -73,10 +75,12 @@ The **YF-B5 / DN20** flow sensor is optional in the current configuration. If it
 ### Stage 1: Base Controller
 
 1. Wire the ESP32, relay board, power, and both DS18B20 probes.
-2. Flash the configuration and confirm Wi-Fi, API, and fallback AP behavior.
-3. Verify `Pool Water Temperature` and `Pool Equipment Ambient Temperature` are both reporting.
-4. Confirm `Pool Controller Self-Test Ready` turns on.
-5. Test each relay output with the valves disconnected or otherwise made safe.
+2. Set `wifi_ssid`, `wifi_password`, and `fallback_ap_password` in `esphome/secrets.yaml`.
+3. Flash the configuration and confirm Wi-Fi, API, and fallback AP behavior.
+4. Verify `Pool Water Temperature` and `Pool Equipment Ambient Temperature` are both reporting.
+5. Confirm `Pool Controller Self-Test Ready` turns on.
+6. Confirm `Pool Controller Device Health` settles to `Healthy` or `WiFi OK / API Idle` after boot.
+7. Test each relay output with the valves disconnected or otherwise made safe.
 
 ### Stage 2: Pool Autofill Safety
 
@@ -110,16 +114,39 @@ The **YF-B5 / DN20** flow sensor is optional in the current configuration. If it
 * **Pool Controller Wi-Fi Signal:** Wi-Fi RSSI in dBm.
 * **Pool Controller Uptime:** Controller uptime.
 * **Pool Controller Internal Chip Temp:** ESP32 internal temperature.
+* **Pool Controller Heap Free / Heap Fragmentation / Main Loop Time:** Low-level ESP32 runtime diagnostics.
+* **Pool Controller Boot Count / Wi-Fi Disconnect Count / API Client Count / API Disconnect Count:** Long-term operational counters.
 
 ### Safety And Status Entities
 
+* **Pool Controller Status:** Standard ESPHome online/offline status entity.
+* **Pool Controller Wi-Fi Connected:** Explicit Wi-Fi connectivity state.
+* **Pool Controller API Connected:** Explicit Home Assistant API connectivity state.
 * **Pool Equipment Freeze Warning:** Set when ambient temperature falls below the configured threshold.
 * **Pool Controller Self-Test Ready:** True when the two temperature probes are available and the controller is safe to start valves.
 * **Pool Controller Self-Test Detail:** Reports `pool_probe_not_ready`, `ambient_probe_not_ready`, `ready_without_flow_sensor`, or `ready`.
 * **Pool Auto Fill Flow Monitor Ready:** True when the flow sensor is connected and publishing state.
 * **Pool Auto Fill Timeout Tripped:** Set when Valve 1 is shut down for timeout.
 * **Pool Auto Fill Flow Fault:** Set when Valve 1 is shut down for low flow or missing flow.
+* **Pool Controller Memory Warning:** Turns on if free heap gets too low or heap fragmentation gets too high.
 * **Pool Valve 1 Last Stop Reason:** Latched reason string such as `running`, `manual_off`, `timeout`, `flow_fault`, or `self_test_blocked`.
+
+### Text And Maintenance Entities
+
+* **Pool Controller Reset Reason:** ESP32 reset cause from the debug integration.
+* **Pool Controller Device Health:** Aggregated summary such as `Recovering After Boot`, `WiFi Reconnecting`, `WiFi OK / API Idle`, `Sensor Trouble`, `Memory Warning`, or `Healthy`.
+* **Pool Controller IP Address / Wi-Fi SSID:** Current network identity values.
+* **Pool Controller Restart:** Restart button for maintenance.
+
+## Required Secrets
+
+The configuration expects these keys in `esphome/secrets.yaml`:
+
+* `wifi_ssid`
+* `wifi_password`
+* `fallback_ap_password`
+
+Choose a real password for the fallback AP before putting the device into service.
 
 ## Validation
 
