@@ -9,14 +9,6 @@ esp32:
       minimum_chip_revision: "3.1"
       sram1_as_iram: true
 
-# --- INTERNAL VOLATILE MEMORY STORAGE ---
-# Creates a safe global variable in memory to hold the exact total pulse count
-globals:
-  - id: total_water_pulses
-    type: int
-    restore_value: no
-    initial_value: '0'
-
 # --- PART 1: LOCAL-ONLY NETWORK CREDENTIALS ---
 wifi:
   ssid: !secret wifi_ssid
@@ -50,7 +42,9 @@ time:
         minutes: 0
         hours: 0
         then:
-          - lambda: 'id(total_water_pulses) = 0;'
+          - pulse_meter.set_total_pulses:
+              id: autofill_flow_rate
+              value: 0
 
 # --- PART 3: HARDWARE DRIVERS & INPUT SLIDERS ---
 one_wire:
@@ -70,6 +64,30 @@ number:
     unit_of_measurement: "min"
     optimistic: true
 
+  # Grace period before declaring a no-flow fault after opening the autofill valve
+  - platform: template
+    name: "Auto Fill Flow Start Delay"
+    id: autofill_flow_start_delay_setting
+    icon: "mdi:timer-play-outline"
+    min_value: 5
+    max_value: 120
+    step: 1
+    initial_value: 20
+    unit_of_measurement: "s"
+    optimistic: true
+
+  # Minimum measured flow that counts as a valid autofill run
+  - platform: template
+    name: "Auto Fill Minimum Flow Rate"
+    id: autofill_min_flow_rate_setting
+    icon: "mdi:water-check"
+    min_value: 0.1
+    max_value: 10
+    step: 0.1
+    initial_value: 0.2
+    unit_of_measurement: "GPM"
+    optimistic: true
+
   # Slider to adjust the Freeze Warning temperature trigger
   - platform: template
     name: "Freeze Warning Threshold"
@@ -82,12 +100,61 @@ number:
     unit_of_measurement: "°F"
     optimistic: true
 
+script:
+  - id: valve_1_timeout_guard
+    mode: restart
+    then:
+      - delay: !lambda |-
+          const float timeout_minutes = id(autofill_timeout_setting).state;
+          const float bounded_timeout_minutes = timeout_minutes < 1.0f ? 1.0f : timeout_minutes;
+          return (uint32_t) (bounded_timeout_minutes * 60000.0f);
+      - if:
+          condition:
+            switch.is_on: valve_1
+          then:
+            - binary_sensor.template.publish:
+                id: autofill_timeout_status
+                state: ON
+            - text_sensor.template.publish:
+                id: valve_1_last_stop_reason
+                state: "timeout"
+            - switch.turn_off: valve_1
+            - logger.log: "Safety Protocol: Valve 1 run time exceeded limit. Automatically shut off."
+
+  - id: valve_1_flow_guard
+    mode: restart
+    then:
+      - delay: !lambda |-
+          const float start_delay_seconds = id(autofill_flow_start_delay_setting).state;
+          const float bounded_start_delay_seconds = start_delay_seconds < 1.0f ? 1.0f : start_delay_seconds;
+          return (uint32_t) (bounded_start_delay_seconds * 1000.0f);
+      - if:
+          condition:
+            lambda: |-
+              if (!id(valve_1).state) {
+                return false;
+              }
+              if (!id(autofill_flow_rate).has_state()) {
+                return true;
+              }
+              return id(autofill_flow_rate).state < id(autofill_min_flow_rate_setting).state;
+          then:
+            - binary_sensor.template.publish:
+                id: autofill_flow_fault_status
+                state: ON
+            - text_sensor.template.publish:
+                id: valve_1_last_stop_reason
+                state: "flow_fault"
+            - switch.turn_off: valve_1
+            - logger.log: "Safety Protocol: Valve 1 detected insufficient flow. Automatically shut off."
+
 # --- PART 4: TEMPERATURE, TELEMETRY & WATER FLOW ENGINE ---
 sensor:
   # Sensor 1: Physical Pool Water Probe
   - platform: dallas_temp
     address: 0xaa000000127b0928
     name: "Pool Water Temperature"
+    id: pool_water_temp
     update_interval: 30s
     unit_of_measurement: "°F"
     accuracy_decimals: 1
@@ -120,30 +187,24 @@ sensor:
                   state: OFF
 
   # Sensor 3: Brass Water Flow Sensor SPEED (GPIO5)
-  - platform: pulse_counter
+  - platform: pulse_meter
     pin: GPIO5
     name: "Water Flow Rate"
     id: autofill_flow_rate
-    update_interval: 6s
-    # Every time the counter runs, it updates our local raw pulse variable
-    on_raw_value:
-      then:
-        - lambda: 'id(total_water_pulses) += x;'
+    timeout: 10s
     filters:
-      - multiply: 0.04015
+      - multiply: 0.00004
     unit_of_measurement: "GPM"
     accuracy_decimals: 1
-
-  # Sensor 4: Total Water Volume (Calculated from accumulated raw pulses)
-  - platform: template
-    name: "Combined Daily Water Consumption"
-    id: daily_water_total
-    update_interval: 6s
-    unit_of_measurement: "gal"
-    accuracy_decimals: 1
-    icon: "mdi:water-meter"
-    # Divides total raw pulses by the YF-B5's exact hardware pulse-per-gallon constant
-    lambda: 'return (float)id(total_water_pulses) / 25000.0;'
+    total:
+      name: "Combined Daily Water Consumption"
+      id: daily_water_total
+      unit_of_measurement: "gal"
+      accuracy_decimals: 1
+      icon: "mdi:water-meter"
+      state_class: total_increasing
+      filters:
+        - multiply: 0.00004
 
   # Diagnostic 5: Tracks Wi-Fi Signal Strength in Decibels (dBm)
   - platform: wifi_signal
@@ -171,9 +232,61 @@ binary_sensor:
     device_class: cold
     icon: "mdi:snowflake-alert"
 
+  - platform: template
+    name: "Pool Controller Self-Test Ready"
+    id: controller_self_test_ready
+    device_class: problem
+    entity_category: diagnostic
+    lambda: |-
+      return id(pool_water_temp).has_state()
+          && id(ambient_air_temp).has_state();
+
+  - platform: template
+    name: "Pool Auto Fill Flow Monitor Ready"
+    id: autofill_flow_monitor_ready
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: |-
+      return id(autofill_flow_rate).has_state();
+
+  - platform: template
+    name: "Pool Auto Fill Timeout Tripped"
+    id: autofill_timeout_status
+    device_class: problem
+    icon: "mdi:timer-alert"
+
+  - platform: template
+    name: "Pool Auto Fill Flow Fault"
+    id: autofill_flow_fault_status
+    device_class: problem
+    icon: "mdi:water-alert"
+
 text_sensor:
   - platform: version
     name: "Pool Controller ESPHome Version"
+
+  - platform: template
+    name: "Pool Controller Self-Test Detail"
+    id: controller_self_test_detail
+    icon: "mdi:clipboard-text-clock-outline"
+    update_interval: 5s
+    lambda: |-
+      if (!id(pool_water_temp).has_state()) {
+        return {"pool_probe_not_ready"};
+      }
+      if (!id(ambient_air_temp).has_state()) {
+        return {"ambient_probe_not_ready"};
+      }
+      if (!id(autofill_flow_rate).has_state()) {
+        return {"ready_without_flow_sensor"};
+      }
+      return {"ready"};
+
+  - platform: template
+    name: "Pool Valve 1 Last Stop Reason"
+    id: valve_1_last_stop_reason
+    icon: "mdi:message-alert-outline"
+    update_interval: never
 
 # --- PART 6: THE 4 ACTIVE VALVE SWITCHES ---
 switch:
@@ -182,30 +295,90 @@ switch:
     name: "Pool Valve 1"
     id: valve_1
     inverted: true
+    restore_mode: ALWAYS_OFF
     on_turn_on:
       then:
-        - delay: !lambda "return id(autofill_timeout_setting).state * 60000;"
         - if:
             condition:
-              switch.is_on: valve_1
+              binary_sensor.is_on: controller_self_test_ready
             then:
+              - binary_sensor.template.publish:
+                  id: autofill_timeout_status
+                  state: OFF
+              - binary_sensor.template.publish:
+                  id: autofill_flow_fault_status
+                  state: OFF
+              - text_sensor.template.publish:
+                  id: valve_1_last_stop_reason
+                  state: "running"
+              - script.execute: valve_1_timeout_guard
+              - if:
+                  condition:
+                    binary_sensor.is_on: autofill_flow_monitor_ready
+                  then:
+                    - script.execute: valve_1_flow_guard
+                  else:
+                    - logger.log: "Safety Protocol: Valve 1 running without flow monitoring because the flow sensor is not ready."
+            else:
+              - text_sensor.template.publish:
+                  id: valve_1_last_stop_reason
+                  state: "self_test_blocked"
               - switch.turn_off: valve_1
-              - logger.log: "Safety Protocol: Valve 1 run time exceeded limit. Automatically shut off."
+              - logger.log: "Safety Protocol: Valve 1 start blocked because controller self-test is not ready."
+    on_turn_off:
+      then:
+        - script.stop: valve_1_timeout_guard
+        - script.stop: valve_1_flow_guard
+        - if:
+            condition:
+              lambda: |-
+                return !id(autofill_timeout_status).state && !id(autofill_flow_fault_status).state;
+            then:
+              - text_sensor.template.publish:
+                  id: valve_1_last_stop_reason
+                  state: "manual_off"
 
   - platform: gpio
     pin: GPIO17
     name: "Garden Valve 2"
     id: valve_2
     inverted: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - if:
+            condition:
+              binary_sensor.is_off: controller_self_test_ready
+            then:
+              - switch.turn_off: valve_2
+              - logger.log: "Safety Protocol: Garden Valve 2 start blocked because controller self-test is not ready."
 
   - platform: gpio
     pin: GPIO18
     name: "Garden Valve 3"
     id: valve_3
     inverted: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - if:
+            condition:
+              binary_sensor.is_off: controller_self_test_ready
+            then:
+              - switch.turn_off: valve_3
+              - logger.log: "Safety Protocol: Garden Valve 3 start blocked because controller self-test is not ready."
 
   - platform: gpio
     pin: GPIO19
     name: "Garden Valve 4"
     id: valve_4
     inverted: true
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      then:
+        - if:
+            condition:
+              binary_sensor.is_off: controller_self_test_ready
+            then:
+              - switch.turn_off: valve_4
+              - logger.log: "Safety Protocol: Garden Valve 4 start blocked because controller self-test is not ready."
