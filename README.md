@@ -238,7 +238,7 @@ If you later prove that your exact sensor output is open-collector and only need
 
 The advertised `DC 5-15V` operating range is acceptable for the sensor power input, but it does **not** guarantee that the signal output is automatically safe for a `3.3V` MCU input.
 
-The current flow conversion constants are a starting point only. Expect to tune `Water Flow Rate` and `Combined Daily Water Consumption` against real measured water volume once the sensor is installed.
+The current flow conversion constants are a starting point only. Expect to tune `Water Flow Rate` and `Daily Water Total` against real measured water volume once the sensor is installed.
 
 ---
 
@@ -307,7 +307,7 @@ Quick sanity rules:
 
 1. Wire the flow sensor to `5V`, `GND`, and `GPIO27` through the documented `10k/20k` resistor divider.
 2. Confirm `Pool Auto Fill Flow Monitor Ready` changes on once the sensor is publishing.
-3. Run water through the line and verify `Water Flow Rate` and `Combined Daily Water Consumption` update.
+3. Run water through the line and verify `Water Flow Rate` and `Daily Water Total` update.
 4. Tune `Auto Fill Flow Start Delay` and `Auto Fill Minimum Flow Rate` using real readings.
 5. Calibrate the flow conversion against a known water volume, because marketplace listings for DN20 hall sensors often omit or misstate the pulse constant.
 6. Confirm Valve 1 now trips `Pool Auto Fill Flow Fault` if the valve opens without valid flow.
@@ -322,7 +322,7 @@ When water is available, calibrate it like this:
 
 1. Start with the current multiplier in the YAML.
 2. Run a known measured volume through the sensor, preferably `1` to `5` gallons.
-3. Note the reported `Combined Daily Water Consumption`.
+3. Note the reported `Daily Water Total`.
 4. Update the multiplier using this formula:
 
    `new multiplier = old multiplier * (actual volume / reported volume)`
@@ -350,7 +350,7 @@ After adjusting the multiplier, reflash the controller and repeat the test until
 * **Pool Water Temperature:** Pool probe reading.
 * **Pool Equipment Ambient Temperature:** Ambient equipment-area probe reading.
 * **Water Flow Rate:** Real-time flow in GPM when the sensor is connected.
-* **Combined Daily Water Consumption:** Daily gallon total from the flow sensor when connected.
+* **Daily Water Total:** Daily gallon total from the flow sensor when connected.
 * **Pool Controller Wi-Fi Signal:** Wi-Fi RSSI in dBm.
 * **Pool Controller Uptime:** Controller uptime.
 * **Pool Controller Internal Chip Temp:** ESP32 internal temperature.

@@ -247,11 +247,19 @@ sensor:
     address: 0xaa000000127b0928
     name: "Pool Water Temperature"
     id: pool_water_temp
+    icon: "mdi:coolant-temperature"
     update_interval: 30s
     unit_of_measurement: "°F"
     accuracy_decimals: 1
     filters:
-      - lambda: return x * 1.8 + 32.0;
+      - lambda: |-
+          if (x <= -100.0f) {
+            return {};
+          }
+          if (x >= 84.0f && x <= 86.0f) {
+            return {};
+          }
+          return x * 1.8f + 32.0f;
 
   # Sensor 2: Physical Ambient Air Probe
   - platform: dallas_temp
@@ -262,7 +270,14 @@ sensor:
     unit_of_measurement: "°F"
     accuracy_decimals: 1
     filters:
-      - lambda: return x * 1.8 + 32.0;
+      - lambda: |-
+          if (x <= -100.0f) {
+            return {};
+          }
+          if (x >= 84.0f && x <= 86.0f) {
+            return {};
+          }
+          return x * 1.8f + 32.0f;
     on_value:
       then:
         - if:
@@ -292,11 +307,11 @@ sensor:
     unit_of_measurement: "GPM"
     accuracy_decimals: 1
     total:
-      name: "Combined Daily Water Consumption"
+      name: "Daily Water Total"
       id: daily_water_total
       unit_of_measurement: "gal"
       accuracy_decimals: 2
-      icon: "mdi:water-meter"
+      icon: "mdi:water-pump"
       state_class: total_increasing
       filters:
         - multiply: 0.00004
