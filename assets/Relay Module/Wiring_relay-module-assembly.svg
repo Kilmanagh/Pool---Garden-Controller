@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 3334 2292" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;">
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="0" y="0" width="1600" height="1100" style="fill:rgb(248,250,252);"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,100.844833,114.815654)">
+        <text x="0px" y="0px" style="font-family:'Arial-BoldMT', 'Arial', sans-serif;font-weight:700;font-size:20px;fill:rgb(29,78,216);">ESP32 + 4-channel 5V optocoupler relay board + 24V<tspan x="499.814px 514.258px " y="0px 0px ">AC</tspan> irrigation valves</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.381132,-0,-44.888088)">
+        <rect x="50" y="130" width="1500" height="300" style="fill:rgb(239,246,255);stroke:rgb(147,197,253);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(4.615706,0,0,2.083333,-436.913164,-148.835909)">
+        <path d="M205,287L425,287" style="fill:none;fill-rule:nonzero;stroke:rgb(220,38,38);stroke-width:2.91px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(1.595502,0,0,2.190799,114.980223,-163.176486)">
+        <rect x="80" y="210" width="170" height="290" style="fill:white;stroke:rgb(203,213,225);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.928575,-83.988189)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.928575,2.986654)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.928575,86.380502)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.961128,-159.252576)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.928575,250.969502)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.961128,-159.252576)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,105.99688,219.106981)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(29,78,216);">1. Control Side: ESP32 <tspan x="168.695px 176.695px 185.594px " y="0px 0px 0px ">To </tspan>Relay Inputs</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,345.441867,354.591644)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(15,23,42);">ESP32</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,357.258273,460.807646)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">5V</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,341.169406,539.985645)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">GND</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,317.870253,623.258464)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">GPIO16</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,317.870253,871.241312)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">GPIO19</text>
+    </g>
+    <g transform="matrix(1.30893,0,0,2.240949,1053.547144,-173.708108)">
+        <rect x="360" y="210" width="220" height="290" style="fill:white;stroke:rgb(203,213,225);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1574.845378,354.591644)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(15,23,42);">Relay Board</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,682.950846,-159.252576)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,682.950846,-167.646726)">
+        <rect x="425" y="318" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,682.950846,-153.171054)">
+        <rect x="425" y="358" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,682.950846,-159.544519)">
+        <rect x="425" y="398" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,687.5,-166.213358)">
+        <rect x="425" y="438" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,687.5,-172.877002)">
+        <rect x="425" y="478" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1627.954102,461.214547)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">DC+</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1631.730143,535.950279)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">DC-</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1631.193034,633.808113)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">IN1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1635.506185,710.767981)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">IN2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1639.933268,787.220887)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">IN3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1639.982096,864.053336)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">IN4</text>
+    </g>
+    <g transform="matrix(4.595028,0,0,2.083333,-428.125026,-157.23006)">
+        <path d="M205,327L425,327" style="fill:none;fill-rule:nonzero;stroke:rgb(17,24,39);stroke-width:2.92px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(4.595028,0,0,2.083333,-428.125026,-142.754387)">
+        <path d="M205,367L425,367" style="fill:none;fill-rule:nonzero;stroke:rgb(15,118,110);stroke-width:2.92px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(4.595028,0,0,2.083333,-428.125026,-147.514355)">
+        <path d="M205,407L425,407" style="fill:none;fill-rule:nonzero;stroke:rgb(15,118,110);stroke-width:2.92px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(4.565416,0,0,2.083333,-415.539618,-159.980357)">
+        <path d="M205,447L425,447" style="fill:none;fill-rule:nonzero;stroke:rgb(15,118,110);stroke-width:2.94px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(4.565416,0,0,2.083333,-415.539618,-162.460335)">
+        <path d="M205,487L425,487" style="fill:none;fill-rule:nonzero;stroke:rgb(15,118,110);stroke-width:2.94px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,779.125113,-118.427017)">
+        <rect x="700" y="210" width="430" height="175" style="fill:rgb(255,247,237);stroke:rgb(253,186,116);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2260.454442,369.12398)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(154,52,18);">Required settings</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2260.454442,429.59731)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Relay board DC+ -&gt; 5V</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2260.454442,494.349675)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Relay board DC- -&gt; ESP32 GND</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2261.341487,548.386975)">
+        <g transform="matrix(16,0,0,16,328.507812,0)">
+        </g>
+        <text x="0px" y="0px" style="font-family:'Arial-BoldMT', 'Arial', sans-serif;font-weight:700;font-size:16px;fill:rgb(31,41,55);">All four jumpers -&gt; low-level trigger (S1-S4)</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2258.721044,607.600911)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Do not power the relay board from ESP32 3V3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,1.486557,0,438.652965)">
+        <rect x="50" y="460" width="1500" height="470" style="fill:rgb(239,246,255);stroke:rgb(147,197,253);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,103.160156,1070.742672)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(29,78,216);">2. Power Side: <tspan x="108.211px 117.391px 122.719px " y="0px 0px 0px ">Tra</tspan>nsformer <tspan x="198.898px 206.898px 215.797px " y="0px 0px 0px ">To </tspan>Relay Contacts <tspan x="332.891px 340.891px 349.789px 354.234px 363.719px 372.617px " y="0px 0px 0px 0px 0px 0px ">To Val</tspan>ves</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="80" y="555" width="220" height="150" style="fill:white;stroke:rgb(203,213,225);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,212.5,1229.166667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(15,23,42);">24V<tspan x="27.281px 37.953px 49.508px 53.664px 62.844px 68.172px " y="0px 0px 0px 0px 0px 0px ">AC Tra</tspan>nsformer</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,229.166667,1300.667539)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Hot / Line</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,229.166667,1406.25)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Common / Return</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,1.994386,-1.448568,96.235958)">
+        <rect x="340" y="535" width="560" height="290" style="fill:white;stroke:rgb(203,213,225);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,745.90133,1213.525391)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(15,23,42);">Relay Contact Screw <tspan x="153.547px 161.547px 170.445px " y="0px 0px 0px ">Ter</tspan>minals</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,706.103516,1794.337413)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">T<tspan x="8.891px 16.891px " y="0px 0px ">yp</tspan>ical board silk is often NC-COM-NO per channel. Match your board labels and only wire COM + NO.</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,802.083333,1333.333333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">CH1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,802.083333,1437.5)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">CH2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,802.083333,1541.666667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">CH3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,802.083333,1645.833333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">CH4</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,-15)">
+        <rect x="530" y="620" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="620" y="620" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1150,1318.25)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">COM1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1343.75,1331.25)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">NO1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="530" y="670" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="620" y="670" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1150,1435.416667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">COM2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1343.75,1435.416667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">NO2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="530" y="720" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="620" y="720" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1150,1539.583333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">COM3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1343.75,1539.583333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">NO3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="530" y="770" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="620" y="770" width="78" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1150,1643.75)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">COM4</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1343.75,1643.75)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">NO4</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,1573.901367,1269.775612)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">NC left open</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2330.320716,1769.646658)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Each row is one full switched 24V<tspan x="237.156px 247.828px " y="0px 0px ">AC</tspan> valve circuit.</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="1125" y="610" width="290" height="40" style="fill:rgb(224,242,254);stroke:rgb(56,189,248);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="1125" y="660" width="290" height="40" style="fill:rgb(224,242,254);stroke:rgb(56,189,248);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="1125" y="710" width="290" height="40" style="fill:rgb(224,242,254);stroke:rgb(56,189,248);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="1125" y="760" width="290" height="40" style="fill:rgb(224,242,254);stroke:rgb(56,189,248);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1308.333333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Pool V<tspan x="45.953px 54.852px " y="0px 0px ">al</tspan>ve 1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1339.583333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Lead <tspan x="39.156px 48.945px 53.391px " y="0px 0px 0px ">A f</tspan>rom NO1</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1412.5)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Garden V<tspan x="67.297px 76.195px " y="0px 0px ">al</tspan>ve 2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1443.75)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Lead <tspan x="39.156px 48.945px 53.391px " y="0px 0px 0px ">A f</tspan>rom NO2</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1516.666667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Garden V<tspan x="67.297px 76.195px " y="0px 0px ">al</tspan>ve 3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1547.916667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Lead <tspan x="39.156px 48.945px 53.391px " y="0px 0px 0px ">A f</tspan>rom NO3</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1620.833333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Garden V<tspan x="67.297px 76.195px " y="0px 0px ">al</tspan>ve 4</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,2406.25,1652.083333)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(71,85,105);">Lead <tspan x="39.156px 48.945px 53.391px " y="0px 0px 0px ">A f</tspan>rom NO4</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M500,634L500,684L530,684" style="fill:none;fill-rule:nonzero;stroke:rgb(255,0,0);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M500,634L500,734L530,734" style="fill:none;fill-rule:nonzero;stroke:rgb(255,0,0);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.229444,0,-114.551111)">
+        <path d="M500,634L500,784L530,784" style="fill:none;fill-rule:nonzero;stroke:rgb(255,0,0);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M698,684L1125,684" style="fill:none;fill-rule:nonzero;stroke:rgb(124,58,237);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M698,734L1125,734" style="fill:none;fill-rule:nonzero;stroke:rgb(124,58,237);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M698,784L1125,784" style="fill:none;fill-rule:nonzero;stroke:rgb(124,58,237);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(1.925631,0,0,2.083333,230.245684,-41)">
+        <path d="M205,675L1460,675" style="fill:none;fill-rule:nonzero;stroke:rgb(71,85,105);stroke-width:2.08px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M1460,675L1460,630L1415,630" style="fill:none;fill-rule:nonzero;stroke:rgb(71,85,105);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M1460,675L1460,680L1415,680" style="fill:none;fill-rule:nonzero;stroke:rgb(71,85,105);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M1460,675L1460,730L1415,730" style="fill:none;fill-rule:nonzero;stroke:rgb(71,85,105);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <path d="M1460,675L1460,780L1415,780" style="fill:none;fill-rule:nonzero;stroke:rgb(71,85,105);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,0)">
+        <rect x="50" y="960" width="1500" height="100" style="fill:white;stroke:rgb(203,213,225);stroke-width:2px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,-600.928575,167.636168)">
+        <rect x="425" y="278" width="90" height="28" style="fill:rgb(226,232,240);stroke:rgb(148,163,184);stroke-width:1.5px;"/>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,156.25,2079.166667)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(29,78,216);">3. Bench <tspan x="67.312px 75.312px 84.211px " y="0px 0px 0px ">Tes</tspan>t Expectations</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,191.666667,2150)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Switch ON in ESPHome/Home <tspan x="222.297px 232.969px " y="0px 0px ">As</tspan>sistant should energize the matching relay<tspan x="538.617px 543.062px " y="0px 0px ">. </tspan>Switch OFF should release it. <tspan x="760.039px 770.711px " y="0px 0px ">Al</tspan>l relays should remain OFF during boot.</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,317.870253,787.907978)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">GPIO18</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,317.870253,706.652312)">
+        <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">GPIO17</text>
+    </g>
+    <g transform="matrix(2.083333,0,0,2.083333,0,-105.961015)">
+        <path d="M698,684L1125,684" style="fill:none;fill-rule:nonzero;stroke:rgb(124,58,237);stroke-width:2px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+    <g transform="matrix(2.193936,0,0,2.083333,171.743668,698.852214)">
+        <path d="M205,287L425,287" style="fill:none;fill-rule:nonzero;stroke:rgb(220,38,38);stroke-width:1.95px;stroke-linecap:round;stroke-linejoin:round;"/>
+    </g>
+</svg>

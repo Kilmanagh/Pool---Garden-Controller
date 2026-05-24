@@ -51,7 +51,82 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 
 ## Wiring Notes
 
-### 1. 24V AC Valve Switching Loop
+### 1. Relay Module Assembly
+
+Verified project infographic: [assets/relay-module-assembly-accurate.svg](assets/relay-module-assembly-accurate.svg)
+
+This project now targets the common **4-channel 5V optocoupler relay board** with input terminals labeled `DC+`, `DC-`, `IN1`, `IN2`, `IN3`, and `IN4`, plus per-channel jumper selectors for **high-level** or **low-level** trigger.
+
+ESP32 to relay-module control wiring:
+
+* `GPIO16` -> `IN1` for **Pool Valve 1**
+* `GPIO17` -> `IN2` for **Garden Valve 2**
+* `GPIO18` -> `IN3` for **Garden Valve 3**
+* `GPIO19` -> `IN4` for **Garden Valve 4**
+* ESP32 `GND` -> relay board `DC-`
+
+Relay board power:
+
+* Relay board `DC+` -> `5V`
+* Relay board `DC-` -> ESP32 `GND`
+* Do **not** power this board from the ESP32 `3V3` rail. This is a `5V` relay board.
+
+Trigger mode for this board:
+
+* Set all four jumper selectors to **low-level trigger**.
+* On boards with `H / L` markings, that means the jumper should connect the center pin to the pin marked `L` for each channel.
+* This matches the YAML, which uses `inverted: true` and therefore expects an **active-low relay input**.
+
+This YAML uses `inverted: true` on every relay output, so the design assumes an **active-low relay input**: pulling the input low energizes the relay, and boot / reset defaults leave valves off.
+
+Relay output terminals:
+
+* Use `COM` and `NO` for each valve circuit.
+* Do **not** use `NC` unless you intentionally want a valve energized when the controller is idle or powered down.
+
+Exact 24VAC terminal mapping:
+
+* 24VAC transformer **hot / line** -> jumper or distribute to all four relay `COM` terminals
+* Relay 1 `NO` -> **Pool Valve 1** control wire
+* Relay 2 `NO` -> **Garden Valve 2** control wire
+* Relay 3 `NO` -> **Garden Valve 3** control wire
+* Relay 4 `NO` -> **Garden Valve 4** control wire
+* 24VAC transformer **common / return** -> shared common wire that goes to the second wire on **every** valve
+
+Valve-side wiring list:
+
+* **Pool Valve 1**: one solenoid wire to relay 1 `NO`, other solenoid wire to the shared 24VAC common
+* **Garden Valve 2**: one solenoid wire to relay 2 `NO`, other solenoid wire to the shared 24VAC common
+* **Garden Valve 3**: one solenoid wire to relay 3 `NO`, other solenoid wire to the shared 24VAC common
+* **Garden Valve 4**: one solenoid wire to relay 4 `NO`, other solenoid wire to the shared 24VAC common
+
+Simple terminal diagram:
+
+```text
+24VAC transformer hot  ----+---- COM1
+                           +---- COM2
+                           +---- COM3
+                           +---- COM4
+
+NO1 ---------------------------- Pool Valve 1 lead A
+NO2 ---------------------------- Garden Valve 2 lead A
+NO3 ---------------------------- Garden Valve 3 lead A
+NO4 ---------------------------- Garden Valve 4 lead A
+
+24VAC transformer common ---+--- Pool Valve 1 lead B
+                            +--- Garden Valve 2 lead B
+                            +--- Garden Valve 3 lead B
+                            +--- Garden Valve 4 lead B
+```
+
+Recommended bench test before connecting the 24V valves:
+
+1. Power the ESP32 and relay board only.
+2. Toggle each valve switch from Home Assistant or the ESPHome web interface.
+3. Confirm the matching relay clicks and its indicator LED changes.
+4. Confirm all relays remain off during boot and reset.
+
+### 2. 24V AC Valve Switching Loop
 
 Orbit valves use a **24V AC** solenoid coil. The ESP32 does not drive the valves directly; the relay board acts as the isolated switching layer:
 +-----------------------------------+
@@ -77,7 +152,7 @@ Orbit valves use a **24V AC** solenoid coil. The ESP32 does not drive the valves
        | Dedicated Remaining Valve Wire   | <--+ (Completes the AC loop)
        +----------------------------------+
 
-### 2. Optional Flow Sensor Interface (`GPIO27`)
+### 3. Optional Flow Sensor Interface (`GPIO27`)
 
 The controller is compatible with the common **DN20 / 3/4 NPT brass hall-effect flow sensor** class, including parts sold as **1-30 L/min**, **DC 5-15V**, and similar to the Lazyfun unit you referenced. If it is not connected, the controller still runs, but Valve 1 no-flow protection and daily water tracking remain inactive.
 
@@ -142,6 +217,49 @@ The current flow conversion constants are a starting point only. Expect to tune 
 
 ---
 
+## Full Wiring Checklist
+
+Use this as the final point-to-point wiring list for the whole controller.
+
+| From | To | Notes |
+| :--- | :--- | :--- |
+| ESP32 `5V` | Relay board `DC+` | Powers the 5V relay board |
+| ESP32 `GND` | Relay board `DC-` | Required common ground |
+| ESP32 `GPIO16` | Relay board `IN1` | Pool Valve 1 control |
+| ESP32 `GPIO17` | Relay board `IN2` | Garden Valve 2 control |
+| ESP32 `GPIO18` | Relay board `IN3` | Garden Valve 3 control |
+| ESP32 `GPIO19` | Relay board `IN4` | Garden Valve 4 control |
+| Relay board jumpers | `L` / low-level trigger position | Required for `inverted: true` YAML behavior |
+| 24VAC transformer hot | Relay `COM1` | Relay 1 common input |
+| 24VAC transformer hot | Relay `COM2` | Relay 2 common input |
+| 24VAC transformer hot | Relay `COM3` | Relay 3 common input |
+| 24VAC transformer hot | Relay `COM4` | Relay 4 common input |
+| Relay `NO1` | Pool Valve 1 lead A | Switched hot for autofill valve |
+| Relay `NO2` | Garden Valve 2 lead A | Switched hot for garden zone 1 |
+| Relay `NO3` | Garden Valve 3 lead A | Switched hot for garden zone 2 |
+| Relay `NO4` | Garden Valve 4 lead A | Switched hot for garden zone 3 |
+| 24VAC transformer common | Pool Valve 1 lead B | Shared common return |
+| 24VAC transformer common | Garden Valve 2 lead B | Shared common return |
+| 24VAC transformer common | Garden Valve 3 lead B | Shared common return |
+| 24VAC transformer common | Garden Valve 4 lead B | Shared common return |
+| ESP32 `GPIO4` | DS18B20 data bus | Shared 1-Wire data line for both temp probes |
+| ESP32 `3V3` | DS18B20 VCC | Power for both temperature probes if they are 3.3V-compatible |
+| ESP32 `GND` | DS18B20 GND | Common ground for both temperature probes |
+| DS18B20 data bus | `4.7k` pull-up to `3V3` | Standard 1-Wire pull-up resistor |
+| ESP32 `5V` | Flow sensor red / VCC | Flow sensor power |
+| ESP32 `GND` | Flow sensor black / GND | Flow sensor ground |
+| Flow sensor yellow / signal | `10k` or `4.7k` resistor to `GPIO27` | Top leg of divider |
+| `GPIO27` | `20k` or `10k` resistor to `GND` | Bottom leg of divider |
+
+Quick sanity rules:
+
+* Use relay `COM` and `NO`, not `NC`.
+* Keep the relay board in **low-level trigger** mode.
+* Keep all grounds common on the low-voltage side.
+* Keep the 24VAC valve wiring electrically separate from the ESP32 signal wiring except through the relay contacts.
+
+---
+
 ## Hardware Bring-Up Checklist
 
 ### Stage 1: Base Controller
@@ -168,6 +286,30 @@ The current flow conversion constants are a starting point only. Expect to tune 
 4. Tune `Auto Fill Flow Start Delay` and `Auto Fill Minimum Flow Rate` using real readings.
 5. Calibrate the flow conversion against a known water volume, because marketplace listings for DN20 hall sensors often omit or misstate the pulse constant.
 6. Confirm Valve 1 now trips `Pool Auto Fill Flow Fault` if the valve opens without valid flow.
+
+## Flow Sensor Calibration
+
+The current configuration uses a starting multiplier of `0.00004` for both live flow and total gallons. That assumes roughly `25,000 pulses per gallon`, which is a reasonable placeholder for a generic DN20 hall sensor but should not be treated as final calibration.
+
+You cannot fully calibrate the sensor until water is actually flowing. Before that, you can only verify the wiring, the pulse input path, and that ESPHome recognizes the sensor once pulses are present.
+
+When water is available, calibrate it like this:
+
+1. Start with the current multiplier in the YAML.
+2. Run a known measured volume through the sensor, preferably `1` to `5` gallons.
+3. Note the reported `Combined Daily Water Consumption`.
+4. Update the multiplier using this formula:
+
+   `new multiplier = old multiplier * (actual volume / reported volume)`
+
+Example:
+
+* Old multiplier: `0.00004`
+* Actual measured volume: `5.00 gal`
+* Reported volume: `4.20 gal`
+* New multiplier: `0.00004 * (5.00 / 4.20) = 0.00004762`
+
+After adjusting the multiplier, reflash the controller and repeat the test until the reported total is close to the measured volume. Once total gallons are calibrated, the live `Water Flow Rate` reading will usually become much more believable as well, since both values are derived from the same pulse stream.
 
 ## Dashboard Controls And Telemetry
 

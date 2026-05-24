@@ -295,7 +295,7 @@ sensor:
       name: "Combined Daily Water Consumption"
       id: daily_water_total
       unit_of_measurement: "gal"
-      accuracy_decimals: 1
+      accuracy_decimals: 2
       icon: "mdi:water-meter"
       state_class: total_increasing
       filters:
