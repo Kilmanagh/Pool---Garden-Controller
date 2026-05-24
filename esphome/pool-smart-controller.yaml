@@ -523,7 +523,7 @@ switch:
     pin: GPIO16
     name: "Pool Valve 1"
     id: valve_1
-    inverted: true
+    inverted: false
     restore_mode: ALWAYS_OFF
     on_turn_on:
       then:
@@ -571,7 +571,7 @@ switch:
     pin: GPIO17
     name: "Garden Valve 2"
     id: valve_2
-    inverted: true
+    inverted: false
     restore_mode: ALWAYS_OFF
     on_turn_on:
       then:
@@ -586,7 +586,7 @@ switch:
     pin: GPIO18
     name: "Garden Valve 3"
     id: valve_3
-    inverted: true
+    inverted: false
     restore_mode: ALWAYS_OFF
     on_turn_on:
       then:
@@ -601,7 +601,7 @@ switch:
     pin: GPIO19
     name: "Garden Valve 4"
     id: valve_4
-    inverted: true
+    inverted: false
     restore_mode: ALWAYS_OFF
     on_turn_on:
       then:

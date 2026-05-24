@@ -122,9 +122,9 @@
         <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Relay board DC- -&gt; ESP32 GND</text>
     </g>
     <g transform="matrix(2.083333,0,0,2.083333,2261.341487,548.386975)">
-        <g transform="matrix(16,0,0,16,328.507812,0)">
+        <g transform="matrix(16,0,0,16,341.84375,0)">
         </g>
-        <text x="0px" y="0px" style="font-family:'Arial-BoldMT', 'Arial', sans-serif;font-weight:700;font-size:16px;fill:rgb(31,41,55);">All four jumpers -&gt; low-level trigger (S1-S4)</text>
+        <text x="0px" y="0px" style="font-family:'Arial-BoldMT', 'Arial', sans-serif;font-weight:700;font-size:16px;fill:rgb(31,41,55);">All four jumpers -&gt; HIGH-level trigger (S1-S4)</text>
     </g>
     <g transform="matrix(2.083333,0,0,2.083333,2258.721044,607.600911)">
         <text x="0px" y="0px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:16px;fill:rgb(31,41,55);">Do not power the relay board from ESP32 3V3</text>

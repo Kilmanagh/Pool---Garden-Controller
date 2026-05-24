@@ -9,7 +9,7 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 * **Local-only operation:** Uses a fixed local IP of `10.7.0.2` and a self-referential gateway for isolated network use.
 * **No forced Wi-Fi reboot loop:** The controller keeps running locally even if the primary SSID is unavailable.
 * **Fallback access point:** Exposes `Pool-Controller-Fallback` if the main Wi-Fi connection is unavailable, protected by its own password.
-* **Safe relay defaults:** All valves are `inverted: true` and `restore_mode: ALWAYS_OFF` so reboot and power recovery default to valves off.
+* **Safe relay defaults:** All valves use `restore_mode: ALWAYS_OFF` so reboot and power recovery default to valves off.
 * **Autofill timeout protection:** Valve 1 starts a restart-safe timeout guard and shuts off automatically when the configured run limit is exceeded.
 * **Optional flow-based protection:** If the flow sensor is connected and reporting, Valve 1 also enforces a no-flow / low-flow shutdown after a configurable startup grace period.
 * **Daily water totalization:** Water use is tracked with `pulse_meter` totalization and reset to zero at midnight using Home Assistant time.
@@ -25,7 +25,7 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 
 * Static local network configuration with fallback AP.
 * Dual DS18B20 temperature monitoring on `GPIO4`.
-* Four inverted relay outputs on `GPIO16` through `GPIO19` with safe boot defaults.
+* Four relay outputs on `GPIO16` through `GPIO19` with safe boot defaults.
 * Valve 1 timeout protection with configurable runtime.
 * Local freeze warning flag with configurable threshold.
 * Flow-based daily water tracking and no-flow protection when the flow sensor is installed.
@@ -44,10 +44,10 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 | :--- | :--- | :--- | :--- |
 | **Dallas 1-Wire Bus** | `GPIO4` | Bus Master | Connects to dual **DS18B20** waterproof probes (Pool & Air) |
 | **Water Flow Sensor** | `GPIO27` | Pulse Input | Connected to an inline **DN20 / 3/4 NPT brass hall-effect water flow sensor** |
-| **Pool Valve 1** | `GPIO16` | Active LOW | Relay 1 — Dedicated Pool Auto-Fill line with safety interlocks |
-| **Garden Valve 2** | `GPIO17` | Active LOW | Relay 2 — Garden Zone 1 |
-| **Garden Valve 3** | `GPIO18` | Active LOW | Relay 3 — Garden Zone 2 |
-| **Garden Valve 4** | `GPIO19` | Active LOW | Relay 4 — Garden Zone 3 |
+| **Pool Valve 1** | `GPIO16` | Active HIGH | Relay 1 — Dedicated Pool Auto-Fill line with safety interlocks |
+| **Garden Valve 2** | `GPIO17` | Active HIGH | Relay 2 — Garden Zone 1 |
+| **Garden Valve 3** | `GPIO18` | Active HIGH | Relay 3 — Garden Zone 2 |
+| **Garden Valve 4** | `GPIO19` | Active HIGH | Relay 4 — Garden Zone 3 |
 
 ## Wiring Notes
 
@@ -73,11 +73,13 @@ Relay board power:
 
 Trigger mode for this board:
 
-* Set all four jumper selectors to **low-level trigger**.
-* On boards with `H / L` markings, that means the jumper should connect the center pin to the pin marked `L` for each channel.
-* This matches the YAML, which uses `inverted: true` and therefore expects an **active-low relay input**.
+* Set all four jumper selectors to **high-level trigger**.
+* On boards with `H / L` markings, that means the jumper should connect the center pin to the pin marked `H` for each channel.
+* This matches the YAML, which uses `inverted: false` and therefore expects an **active-high relay input**.
 
-This YAML uses `inverted: true` on every relay output, so the design assumes an **active-low relay input**: pulling the input low energizes the relay, and boot / reset defaults leave valves off.
+This YAML uses `inverted: false` on every relay output, so the design assumes an **active-high relay input**: driving the input high energizes the relay, and boot / reset defaults leave valves off.
+
+In practical operation, that means the ESPHome / Home Assistant valve switch entities are now **active-high**: turning a switch `ON` drives the GPIO high and energizes the matching relay, and turning it `OFF` releases the relay.
 
 Relay output terminals:
 
@@ -229,7 +231,7 @@ Use this as the final point-to-point wiring list for the whole controller.
 | ESP32 `GPIO17` | Relay board `IN2` | Garden Valve 2 control |
 | ESP32 `GPIO18` | Relay board `IN3` | Garden Valve 3 control |
 | ESP32 `GPIO19` | Relay board `IN4` | Garden Valve 4 control |
-| Relay board jumpers | `L` / low-level trigger position | Required for `inverted: true` YAML behavior |
+| Relay board jumpers | `H` / high-level trigger position | Required for `inverted: false` YAML behavior |
 | 24VAC transformer hot | Relay `COM1` | Relay 1 common input |
 | 24VAC transformer hot | Relay `COM2` | Relay 2 common input |
 | 24VAC transformer hot | Relay `COM3` | Relay 3 common input |
@@ -254,7 +256,7 @@ Use this as the final point-to-point wiring list for the whole controller.
 Quick sanity rules:
 
 * Use relay `COM` and `NO`, not `NC`.
-* Keep the relay board in **low-level trigger** mode.
+* Keep the relay board in **high-level trigger** mode.
 * Keep all grounds common on the low-voltage side.
 * Keep the 24VAC valve wiring electrically separate from the ESP32 signal wiring except through the relay contacts.
 
