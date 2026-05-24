@@ -128,6 +128,29 @@ Recommended bench test before connecting the 24V valves:
 3. Confirm the matching relay clicks and its indicator LED changes.
 4. Confirm all relays remain off during boot and reset.
 
+Dry-bench checklist before adding 24VAC:
+
+1. Reflash the current YAML and confirm the board boots cleanly.
+2. Verify all four relay entities switch cleanly: `ON` should energize the relay, `OFF` should release it.
+3. Meter `COM` to `NO` on each relay channel with no 24VAC connected.
+4. Confirm both DS18B20 probes report sane temperatures.
+5. Leave the controller powered for a while and confirm there is no relay chatter or reboot loop.
+
+Valve status verification:
+
+The controller now exposes a text status entity for each valve.
+
+* `running` means that relay output is currently on.
+* `idle` means the relay is currently off and the controller self-test is ready.
+* `blocked` means the relay is off because the controller self-test is not ready yet, usually because one or both temperature probes are not reporting.
+
+How to verify `blocked`, `idle`, and `running` on the bench:
+
+1. Boot normally with both temperature probes reporting: each valve status should settle at `idle` when off.
+2. Turn a valve on: that valve status should change to `running`.
+3. Turn it back off: that valve status should return to `idle`.
+4. To verify `blocked`, disconnect a temperature probe or otherwise force the controller self-test to fail, then try turning on a valve. The valve should refuse to start and the corresponding status should read `blocked`.
+
 ### 2. 24V AC Valve Switching Loop
 
 Orbit valves use a **24V AC** solenoid coil. The ESP32 does not drive the valves directly; the relay board acts as the isolated switching layer:

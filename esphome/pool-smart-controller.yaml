@@ -475,6 +475,62 @@ text_sensor:
       return {"ready"};
 
   - platform: template
+    name: "Pool Valve 1 Status"
+    id: valve_1_status
+    icon: "mdi:valve"
+    update_interval: 5s
+    lambda: |-
+      if (id(valve_1).state) {
+        return {"running"};
+      }
+      if (!id(controller_self_test_ready).state) {
+        return {"blocked"};
+      }
+      return {"idle"};
+
+  - platform: template
+    name: "Garden Valve 2 Status"
+    id: valve_2_status
+    icon: "mdi:valve"
+    update_interval: 5s
+    lambda: |-
+      if (id(valve_2).state) {
+        return {"running"};
+      }
+      if (!id(controller_self_test_ready).state) {
+        return {"blocked"};
+      }
+      return {"idle"};
+
+  - platform: template
+    name: "Garden Valve 3 Status"
+    id: valve_3_status
+    icon: "mdi:valve"
+    update_interval: 5s
+    lambda: |-
+      if (id(valve_3).state) {
+        return {"running"};
+      }
+      if (!id(controller_self_test_ready).state) {
+        return {"blocked"};
+      }
+      return {"idle"};
+
+  - platform: template
+    name: "Garden Valve 4 Status"
+    id: valve_4_status
+    icon: "mdi:valve"
+    update_interval: 5s
+    lambda: |-
+      if (id(valve_4).state) {
+        return {"running"};
+      }
+      if (!id(controller_self_test_ready).state) {
+        return {"blocked"};
+      }
+      return {"idle"};
+
+  - platform: template
     name: "Pool Controller Device Health"
     id: device_health
     icon: "mdi:heart-pulse"
