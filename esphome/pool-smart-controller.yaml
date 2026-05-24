@@ -253,11 +253,9 @@ sensor:
     accuracy_decimals: 1
     filters:
       - lambda: |-
-          if (x <= -100.0f) {
-            return {};
-          }
-          if (x >= 84.0f && x <= 86.0f) {
-            return {};
+          const bool invalid_read = x <= -100.0f || (x >= 84.0f && x <= 86.0f);
+          if (invalid_read && id(pool_water_temp).has_state()) {
+            return id(pool_water_temp).state;
           }
           return x * 1.8f + 32.0f;
 
@@ -271,11 +269,9 @@ sensor:
     accuracy_decimals: 1
     filters:
       - lambda: |-
-          if (x <= -100.0f) {
-            return {};
-          }
-          if (x >= 84.0f && x <= 86.0f) {
-            return {};
+          const bool invalid_read = x <= -100.0f || (x >= 84.0f && x <= 86.0f);
+          if (invalid_read && id(ambient_air_temp).has_state()) {
+            return id(ambient_air_temp).state;
           }
           return x * 1.8f + 32.0f;
     on_value:
