@@ -574,7 +574,7 @@ text_sensor:
       return {"ready"};
 
   - platform: template
-    name: "Pool Fill Valve 1 Status"
+    name: "Pool Fill Valve Status"
     id: valve_1_status
     icon: "mdi:valve"
     update_interval: 5s
@@ -588,7 +588,7 @@ text_sensor:
       return {"idle"};
 
   - platform: template
-    name: "Garden Valve 2 Status"
+    name: "Garden Valve 1 Status"
     id: valve_2_status
     icon: "mdi:valve"
     update_interval: 5s
@@ -602,7 +602,7 @@ text_sensor:
       return {"idle"};
 
   - platform: template
-    name: "Garden Valve 3 Status"
+    name: "Garden Valve 2 Status"
     id: valve_3_status
     icon: "mdi:valve"
     update_interval: 5s
@@ -657,7 +657,7 @@ text_sensor:
       return {"Healthy"};
 
   - platform: template
-    name: "Pool Fill Valve 1 Last Stop Reason"
+    name: "Pool Fill Valve Last Stop Reason"
     id: valve_1_last_stop_reason
     icon: "mdi:message-alert-outline"
     update_interval: never
@@ -728,7 +728,7 @@ switch:
 
   - platform: gpio
     pin: GPIO16
-    name: "Pool Fill Valve 1"
+    name: "Pool Fill Valve"
     id: valve_1
     inverted: false
     restore_mode: ALWAYS_OFF
@@ -776,7 +776,7 @@ switch:
 
   - platform: gpio
     pin: GPIO17
-    name: "Garden Valve 2"
+    name: "Garden Valve 1"
     id: valve_2
     inverted: false
     restore_mode: ALWAYS_OFF
@@ -787,11 +787,11 @@ switch:
               binary_sensor.is_off: controller_self_test_ready
             then:
               - switch.turn_off: valve_2
-              - logger.log: "Safety Protocol: Garden Valve 2 start blocked because controller self-test is not ready."
+              - logger.log: "Safety Protocol: Garden Valve 1 start blocked because controller self-test is not ready."
 
   - platform: gpio
     pin: GPIO18
-    name: "Garden Valve 3"
+    name: "Garden Valve 2"
     id: valve_3
     inverted: false
     restore_mode: ALWAYS_OFF
@@ -802,7 +802,7 @@ switch:
               binary_sensor.is_off: controller_self_test_ready
             then:
               - switch.turn_off: valve_3
-              - logger.log: "Safety Protocol: Garden Valve 3 start blocked because controller self-test is not ready."
+              - logger.log: "Safety Protocol: Garden Valve 2 start blocked because controller self-test is not ready."
 
   - platform: gpio
     pin: GPIO19
@@ -816,7 +816,7 @@ switch:
             condition:
               and:
                 - binary_sensor.is_on: controller_self_test_ready
-                 - binary_sensor.is_on: pool_pump_running
+                - binary_sensor.is_on: pool_pump_running
                 - switch.is_on: pool_purge_armed_switch
             then:
               - binary_sensor.template.publish:
