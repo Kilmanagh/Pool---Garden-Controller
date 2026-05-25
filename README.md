@@ -127,12 +127,49 @@ Timeout safety rules:
 * **Pool Purge Valve** has its own configurable auto-off timeout using **Pool Purge Max Run Time**, default `15` minutes.
 * The purge timeout exists specifically to reduce the chance of draining too much water if the purge valve is turned on and forgotten.
 
+Pool purge safety model:
+
+* The controller now exposes three purge-related helpers:
+* **Pool Pump Running Flag**: manual helper switch that represents whether the pool pump is currently running.
+* **Pool Pump Running**: matching binary sensor published from that helper state.
+* **Pool Purge Armed**: one-shot helper switch that must be enabled before the purge valve is allowed to open.
+* **Pool Purge Arm Window**: configurable timer that controls how long the armed state stays valid, default `2` minutes.
+
+Exact purge start requirements:
+
+* **Pool Purge Valve** is allowed to start only when all of these are true:
+* controller self-test is ready
+* **Pool Pump Running** is `ON`
+* **Pool Purge Armed** is `ON`
+
+How the arming flow works:
+
+1. Turn **Pool Pump Running Flag** `ON` when the real pool pump is running.
+2. Turn **Pool Purge Armed** `ON`.
+3. Start **Pool Purge Valve** before the arm window expires.
+4. As soon as purge successfully starts, **Pool Purge Armed** is automatically cleared back to `OFF`.
+5. If purge is not started in time, the arm window expires and **Pool Purge Armed** automatically resets to `OFF`.
+
+Forced shutdown behavior:
+
+* If **Pool Pump Running Flag** changes to `OFF` while **Pool Purge Valve** is already running, the purge valve is forced closed immediately.
+* If the purge valve runs longer than **Pool Purge Max Run Time**, it is forced closed by the timeout guard.
+
+Why this exists:
+
+* The pump-running interlock prevents opening the purge path without active circulation.
+* The armed helper makes purge a deliberate two-step action instead of a single accidental tap.
+* The one-shot auto-clear prevents purge from staying permanently armed after a previous use.
+
 Recommended bench test before connecting the 24V valves:
 
 1. Power the ESP32 and relay board only.
 2. Toggle each valve switch from Home Assistant or the ESPHome web interface.
 3. Confirm the matching relay clicks and its indicator LED changes.
 4. Confirm all relays remain off during boot and reset.
+5. For purge specifically, verify that **Pool Purge Valve** will not start until both **Pool Pump Running Flag** and **Pool Purge Armed** are turned on.
+6. Verify that starting purge automatically clears **Pool Purge Armed** back to `OFF`.
+7. Verify that turning **Pool Pump Running Flag** `OFF` while purge is active immediately shuts the purge relay back off.
 
 Dry-bench checklist before adding 24VAC:
 
@@ -141,6 +178,7 @@ Dry-bench checklist before adding 24VAC:
 3. Meter `COM` to `NO` on each relay channel with no 24VAC connected.
 4. Confirm both DS18B20 probes report sane temperatures.
 5. Leave the controller powered for a while and confirm there is no relay chatter or reboot loop.
+6. Confirm **Pool Purge Armed** auto-expires after the configured arm window if purge is not started.
 
 Valve status verification:
 

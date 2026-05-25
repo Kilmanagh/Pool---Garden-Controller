@@ -27,6 +27,9 @@ esphome:
       - binary_sensor.template.publish:
           id: purge_timeout_status
           state: OFF
+      - binary_sensor.template.publish:
+          id: pool_pump_running
+          state: OFF
       - text_sensor.template.publish:
           id: valve_1_last_stop_reason
           state: "booting"
@@ -47,6 +50,14 @@ globals:
     type: int
     restore_value: yes
     initial_value: '0'
+  - id: pool_pump_running_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: pool_purge_armed_state
+    type: bool
+    restore_value: no
+    initial_value: 'false'
   - id: wifi_connected_state
     type: bool
     restore_value: no
@@ -211,6 +222,18 @@ number:
     optimistic: true
     restore_value: true
 
+  - platform: template
+    name: "Pool Purge Arm Window"
+    id: purge_arm_window_setting
+    icon: "mdi:timer-cog-outline"
+    min_value: 1
+    max_value: 10
+    step: 1
+    initial_value: 2
+    unit_of_measurement: "min"
+    optimistic: true
+    restore_value: true
+
 script:
   - id: valve_1_timeout_guard
     mode: restart
@@ -278,6 +301,20 @@ script:
                 state: "timeout"
             - switch.turn_off: valve_4
             - logger.log: "Safety Protocol: Pool Purge Valve run time exceeded limit. Automatically shut off."
+
+  - id: purge_arm_expire_guard
+    mode: restart
+    then:
+      - delay: !lambda |-
+          const float arm_window_minutes = id(purge_arm_window_setting).state;
+          const float bounded_arm_window_minutes = arm_window_minutes < 1.0f ? 1.0f : arm_window_minutes;
+          return (uint32_t) (bounded_arm_window_minutes * 60000.0f);
+      - if:
+          condition:
+            switch.is_on: pool_purge_armed_switch
+          then:
+            - switch.turn_off: pool_purge_armed_switch
+            - logger.log: "Safety Protocol: Pool Purge Armed window expired and was automatically cleared."
 
 # --- PART 4: TEMPERATURE, TELEMETRY & WATER FLOW ENGINE ---
 sensor:
@@ -490,6 +527,12 @@ binary_sensor:
     icon: "mdi:timer-alert"
 
   - platform: template
+    name: "Pool Pump Running"
+    id: pool_pump_running
+    device_class: running
+    icon: "mdi:pump"
+
+  - platform: template
     name: "Pool Controller Memory Warning"
     id: memory_warning
     device_class: problem
@@ -637,6 +680,52 @@ button:
 
 # --- PART 6: THE 4 ACTIVE VALVE SWITCHES ---
 switch:
+  - platform: template
+    name: "Pool Pump Running Flag"
+    id: pool_pump_running_flag_switch
+    icon: "mdi:pump"
+    lambda: |-
+      return id(pool_pump_running_state);
+    turn_on_action:
+      - lambda: |-
+          id(pool_pump_running_state) = true;
+      - binary_sensor.template.publish:
+          id: pool_pump_running
+          state: ON
+    turn_off_action:
+      - lambda: |-
+          id(pool_pump_running_state) = false;
+      - binary_sensor.template.publish:
+          id: pool_pump_running
+          state: OFF
+      - if:
+          condition:
+            switch.is_on: valve_4
+          then:
+            - text_sensor.template.publish:
+                id: valve_4_last_stop_reason
+                state: "pump_off"
+            - switch.turn_off: valve_4
+            - logger.log: "Safety Protocol: Pool Purge Valve shut off because the pool pump running flag changed to OFF."
+    restore_mode: ALWAYS_OFF
+
+  - platform: template
+    name: "Pool Purge Armed"
+    id: pool_purge_armed_switch
+    icon: "mdi:shield-check-outline"
+    lambda: |-
+      return id(pool_purge_armed_state);
+    turn_on_action:
+      - lambda: |-
+          id(pool_purge_armed_state) = true;
+      - script.execute: purge_arm_expire_guard
+      - logger.log: "Safety Protocol: Pool Purge Armed enabled. Purge can now start until the arm window expires."
+    turn_off_action:
+      - lambda: |-
+          id(pool_purge_armed_state) = false;
+      - script.stop: purge_arm_expire_guard
+    restore_mode: ALWAYS_OFF
+
   - platform: gpio
     pin: GPIO16
     name: "Pool Fill Valve 1"
@@ -725,21 +814,41 @@ switch:
       then:
         - if:
             condition:
-              binary_sensor.is_on: controller_self_test_ready
+              and:
+                - binary_sensor.is_on: controller_self_test_ready
+                - binary_sensor.is_on: pool_pump_running
+                - switch.is_on: pool_purge_armed_switch
             then:
               - binary_sensor.template.publish:
                   id: purge_timeout_status
                   state: OFF
+              - switch.turn_off: pool_purge_armed_switch
               - text_sensor.template.publish:
                   id: valve_4_last_stop_reason
                   state: "running"
               - script.execute: valve_4_timeout_guard
             else:
-              - text_sensor.template.publish:
-                  id: valve_4_last_stop_reason
-                  state: "self_test_blocked"
+              - if:
+                  condition:
+                    binary_sensor.is_off: controller_self_test_ready
+                  then:
+                    - text_sensor.template.publish:
+                        id: valve_4_last_stop_reason
+                        state: "self_test_blocked"
+                  else:
+                    - if:
+                        condition:
+                          binary_sensor.is_off: pool_pump_running
+                        then:
+                          - text_sensor.template.publish:
+                              id: valve_4_last_stop_reason
+                              state: "pump_not_running"
+                        else:
+                          - text_sensor.template.publish:
+                              id: valve_4_last_stop_reason
+                              state: "not_armed"
               - switch.turn_off: valve_4
-              - logger.log: "Safety Protocol: Pool Purge Valve start blocked because controller self-test is not ready."
+              - logger.log: "Safety Protocol: Pool Purge Valve start blocked because self-test is not ready, the pool pump flag is OFF, or Pool Purge Armed is not enabled."
     on_turn_off:
       then:
         - script.stop: valve_4_timeout_guard
