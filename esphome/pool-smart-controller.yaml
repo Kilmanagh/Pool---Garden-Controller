@@ -50,7 +50,7 @@ globals:
     type: int
     restore_value: yes
     initial_value: '0'
-  - id: pool_pump_running_state
+  - id: pool_pump_state
     type: bool
     restore_value: no
     initial_value: 'false'
@@ -681,20 +681,20 @@ button:
 # --- PART 6: THE 4 ACTIVE VALVE SWITCHES ---
 switch:
   - platform: template
-    name: "Pool Pump Running Flag"
-    id: pool_pump_running_flag_switch
+    name: "Pool Pump State"
+    id: pool_pump_state_switch
     icon: "mdi:pump"
     lambda: |-
-      return id(pool_pump_running_state);
+      return id(pool_pump_state);
     turn_on_action:
       - lambda: |-
-          id(pool_pump_running_state) = true;
+          id(pool_pump_state) = true;
       - binary_sensor.template.publish:
           id: pool_pump_running
           state: ON
     turn_off_action:
       - lambda: |-
-          id(pool_pump_running_state) = false;
+          id(pool_pump_state) = false;
       - binary_sensor.template.publish:
           id: pool_pump_running
           state: OFF
@@ -706,7 +706,7 @@ switch:
                 id: valve_4_last_stop_reason
                 state: "pump_off"
             - switch.turn_off: valve_4
-            - logger.log: "Safety Protocol: Pool Purge Valve shut off because the pool pump running flag changed to OFF."
+            - logger.log: "Safety Protocol: Pool Purge Valve shut off because the pool pump state changed to OFF."
     restore_mode: ALWAYS_OFF
 
   - platform: template
@@ -816,7 +816,7 @@ switch:
             condition:
               and:
                 - binary_sensor.is_on: controller_self_test_ready
-                - binary_sensor.is_on: pool_pump_running
+                 - binary_sensor.is_on: pool_pump_running
                 - switch.is_on: pool_purge_armed_switch
             then:
               - binary_sensor.template.publish:

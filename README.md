@@ -130,7 +130,7 @@ Timeout safety rules:
 Pool purge safety model:
 
 * The controller now exposes three purge-related helpers:
-* **Pool Pump Running Flag**: manual helper switch that represents whether the pool pump is currently running.
+* **Pool Pump State**: manual helper switch that represents whether the pool pump is currently running.
 * **Pool Pump Running**: matching binary sensor published from that helper state.
 * **Pool Purge Armed**: one-shot helper switch that must be enabled before the purge valve is allowed to open.
 * **Pool Purge Arm Window**: configurable timer that controls how long the armed state stays valid, default `2` minutes.
@@ -144,7 +144,7 @@ Exact purge start requirements:
 
 How the arming flow works:
 
-1. Turn **Pool Pump Running Flag** `ON` when the real pool pump is running.
+1. Turn **Pool Pump State** `ON` when the real pool pump is running.
 2. Turn **Pool Purge Armed** `ON`.
 3. Start **Pool Purge Valve** before the arm window expires.
 4. As soon as purge successfully starts, **Pool Purge Armed** is automatically cleared back to `OFF`.
@@ -152,7 +152,7 @@ How the arming flow works:
 
 Forced shutdown behavior:
 
-* If **Pool Pump Running Flag** changes to `OFF` while **Pool Purge Valve** is already running, the purge valve is forced closed immediately.
+* If **Pool Pump State** changes to `OFF` while **Pool Purge Valve** is already running, the purge valve is forced closed immediately.
 * If the purge valve runs longer than **Pool Purge Max Run Time**, it is forced closed by the timeout guard.
 
 Why this exists:
@@ -167,9 +167,9 @@ Recommended bench test before connecting the 24V valves:
 2. Toggle each valve switch from Home Assistant or the ESPHome web interface.
 3. Confirm the matching relay clicks and its indicator LED changes.
 4. Confirm all relays remain off during boot and reset.
-5. For purge specifically, verify that **Pool Purge Valve** will not start until both **Pool Pump Running Flag** and **Pool Purge Armed** are turned on.
+5. For purge specifically, verify that **Pool Purge Valve** will not start until both **Pool Pump State** and **Pool Purge Armed** are turned on.
 6. Verify that starting purge automatically clears **Pool Purge Armed** back to `OFF`.
-7. Verify that turning **Pool Pump Running Flag** `OFF` while purge is active immediately shuts the purge relay back off.
+7. Verify that turning **Pool Pump State** `OFF` while purge is active immediately shuts the purge relay back off.
 
 Dry-bench checklist before adding 24VAC:
 
