@@ -24,8 +24,14 @@ esphome:
       - binary_sensor.template.publish:
           id: autofill_flow_fault_status
           state: OFF
+      - binary_sensor.template.publish:
+          id: purge_timeout_status
+          state: OFF
       - text_sensor.template.publish:
           id: valve_1_last_stop_reason
+          state: "booting"
+      - text_sensor.template.publish:
+          id: valve_4_last_stop_reason
           state: "booting"
 
 esp32:
@@ -192,6 +198,19 @@ number:
     optimistic: true
     restore_value: true
 
+  # Max run time for the pool purge valve to avoid draining too much water
+  - platform: template
+    name: "Pool Purge Max Run Time"
+    id: purge_timeout_setting
+    icon: "mdi:clock-end"
+    min_value: 1
+    max_value: 120
+    step: 1
+    initial_value: 15
+    unit_of_measurement: "min"
+    optimistic: true
+    restore_value: true
+
 script:
   - id: valve_1_timeout_guard
     mode: restart
@@ -239,6 +258,26 @@ script:
                 state: "flow_fault"
             - switch.turn_off: valve_1
             - logger.log: "Safety Protocol: Valve 1 detected insufficient flow. Automatically shut off."
+
+  - id: valve_4_timeout_guard
+    mode: restart
+    then:
+      - delay: !lambda |-
+          const float timeout_minutes = id(purge_timeout_setting).state;
+          const float bounded_timeout_minutes = timeout_minutes < 1.0f ? 1.0f : timeout_minutes;
+          return (uint32_t) (bounded_timeout_minutes * 60000.0f);
+      - if:
+          condition:
+            switch.is_on: valve_4
+          then:
+            - binary_sensor.template.publish:
+                id: purge_timeout_status
+                state: ON
+            - text_sensor.template.publish:
+                id: valve_4_last_stop_reason
+                state: "timeout"
+            - switch.turn_off: valve_4
+            - logger.log: "Safety Protocol: Pool Purge Valve run time exceeded limit. Automatically shut off."
 
 # --- PART 4: TEMPERATURE, TELEMETRY & WATER FLOW ENGINE ---
 sensor:
@@ -445,6 +484,12 @@ binary_sensor:
     icon: "mdi:water-alert"
 
   - platform: template
+    name: "Pool Purge Timeout Tripped"
+    id: purge_timeout_status
+    device_class: problem
+    icon: "mdi:timer-alert"
+
+  - platform: template
     name: "Pool Controller Memory Warning"
     id: memory_warning
     device_class: problem
@@ -486,7 +531,7 @@ text_sensor:
       return {"ready"};
 
   - platform: template
-    name: "Pool Valve 1 Status"
+    name: "Pool Fill Valve 1 Status"
     id: valve_1_status
     icon: "mdi:valve"
     update_interval: 5s
@@ -528,7 +573,7 @@ text_sensor:
       return {"idle"};
 
   - platform: template
-    name: "Garden Valve 4 Status"
+    name: "Pool Purge Valve Status"
     id: valve_4_status
     icon: "mdi:valve"
     update_interval: 5s
@@ -569,8 +614,14 @@ text_sensor:
       return {"Healthy"};
 
   - platform: template
-    name: "Pool Valve 1 Last Stop Reason"
+    name: "Pool Fill Valve 1 Last Stop Reason"
     id: valve_1_last_stop_reason
+    icon: "mdi:message-alert-outline"
+    update_interval: never
+
+  - platform: template
+    name: "Pool Purge Valve Last Stop Reason"
+    id: valve_4_last_stop_reason
     icon: "mdi:message-alert-outline"
     update_interval: never
 
@@ -588,7 +639,7 @@ button:
 switch:
   - platform: gpio
     pin: GPIO16
-    name: "Pool Valve 1"
+    name: "Pool Fill Valve 1"
     id: valve_1
     inverted: false
     restore_mode: ALWAYS_OFF
@@ -666,7 +717,7 @@ switch:
 
   - platform: gpio
     pin: GPIO19
-    name: "Garden Valve 4"
+    name: "Pool Purge Valve"
     id: valve_4
     inverted: false
     restore_mode: ALWAYS_OFF
@@ -674,7 +725,29 @@ switch:
       then:
         - if:
             condition:
-              binary_sensor.is_off: controller_self_test_ready
+              binary_sensor.is_on: controller_self_test_ready
             then:
+              - binary_sensor.template.publish:
+                  id: purge_timeout_status
+                  state: OFF
+              - text_sensor.template.publish:
+                  id: valve_4_last_stop_reason
+                  state: "running"
+              - script.execute: valve_4_timeout_guard
+            else:
+              - text_sensor.template.publish:
+                  id: valve_4_last_stop_reason
+                  state: "self_test_blocked"
               - switch.turn_off: valve_4
-              - logger.log: "Safety Protocol: Garden Valve 4 start blocked because controller self-test is not ready."
+              - logger.log: "Safety Protocol: Pool Purge Valve start blocked because controller self-test is not ready."
+    on_turn_off:
+      then:
+        - script.stop: valve_4_timeout_guard
+        - if:
+            condition:
+              lambda: |-
+                return !id(purge_timeout_status).state;
+            then:
+              - text_sensor.template.publish:
+                  id: valve_4_last_stop_reason
+                  state: "manual_off"

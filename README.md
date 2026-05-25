@@ -44,10 +44,10 @@ An autonomous local controller built on an **ESP32** using **ESPHome** on **ESP-
 | :--- | :--- | :--- | :--- |
 | **Dallas 1-Wire Bus** | `GPIO4` | Bus Master | Connects to dual **DS18B20** waterproof probes (Pool & Air) |
 | **Water Flow Sensor** | `GPIO27` | Pulse Input | Connected to an inline **DN20 / 3/4 NPT brass hall-effect water flow sensor** |
-| **Pool Valve 1** | `GPIO16` | Active HIGH | Relay 1 — Dedicated Pool Auto-Fill line with safety interlocks |
+| **Pool Fill Valve 1** | `GPIO16` | Active HIGH | Relay 1 — Dedicated pool auto-fill line with safety interlocks |
 | **Garden Valve 2** | `GPIO17` | Active HIGH | Relay 2 — Garden Zone 1 |
 | **Garden Valve 3** | `GPIO18` | Active HIGH | Relay 3 — Garden Zone 2 |
-| **Garden Valve 4** | `GPIO19` | Active HIGH | Relay 4 — Garden Zone 3 |
+| **Pool Purge Valve** | `GPIO19` | Active HIGH | Relay 4 — Dedicated pool purge / drain path with timeout protection |
 
 ## Wiring Notes
 
@@ -59,10 +59,10 @@ This project now targets the common **4-channel 5V optocoupler relay board** wit
 
 ESP32 to relay-module control wiring:
 
-* `GPIO16` -> `IN1` for **Pool Valve 1**
+* `GPIO16` -> `IN1` for **Pool Fill Valve 1**
 * `GPIO17` -> `IN2` for **Garden Valve 2**
 * `GPIO18` -> `IN3` for **Garden Valve 3**
-* `GPIO19` -> `IN4` for **Garden Valve 4**
+* `GPIO19` -> `IN4` for **Pool Purge Valve**
 * ESP32 `GND` -> relay board `DC-`
 
 Relay board power:
@@ -89,18 +89,18 @@ Relay output terminals:
 Exact 24VAC terminal mapping:
 
 * 24VAC transformer **hot / line** -> jumper or distribute to all four relay `COM` terminals
-* Relay 1 `NO` -> **Pool Valve 1** control wire
+* Relay 1 `NO` -> **Pool Fill Valve 1** control wire
 * Relay 2 `NO` -> **Garden Valve 2** control wire
 * Relay 3 `NO` -> **Garden Valve 3** control wire
-* Relay 4 `NO` -> **Garden Valve 4** control wire
+* Relay 4 `NO` -> **Pool Purge Valve** control wire
 * 24VAC transformer **common / return** -> shared common wire that goes to the second wire on **every** valve
 
 Valve-side wiring list:
 
-* **Pool Valve 1**: one solenoid wire to relay 1 `NO`, other solenoid wire to the shared 24VAC common
+* **Pool Fill Valve 1**: one solenoid wire to relay 1 `NO`, other solenoid wire to the shared 24VAC common
 * **Garden Valve 2**: one solenoid wire to relay 2 `NO`, other solenoid wire to the shared 24VAC common
 * **Garden Valve 3**: one solenoid wire to relay 3 `NO`, other solenoid wire to the shared 24VAC common
-* **Garden Valve 4**: one solenoid wire to relay 4 `NO`, other solenoid wire to the shared 24VAC common
+* **Pool Purge Valve**: one solenoid wire to relay 4 `NO`, other solenoid wire to the shared 24VAC common
 
 Simple terminal diagram:
 
@@ -110,16 +110,22 @@ Simple terminal diagram:
                            +---- COM3
                            +---- COM4
 
-NO1 ---------------------------- Pool Valve 1 lead A
+NO1 ---------------------------- Pool Fill Valve 1 lead A
 NO2 ---------------------------- Garden Valve 2 lead A
 NO3 ---------------------------- Garden Valve 3 lead A
-NO4 ---------------------------- Garden Valve 4 lead A
+NO4 ---------------------------- Pool Purge Valve lead A
 
-24VAC transformer common ---+--- Pool Valve 1 lead B
+24VAC transformer common ---+--- Pool Fill Valve 1 lead B
                             +--- Garden Valve 2 lead B
                             +--- Garden Valve 3 lead B
-                            +--- Garden Valve 4 lead B
+                            +--- Pool Purge Valve lead B
 ```
+
+Timeout safety rules:
+
+* **Pool Fill Valve 1** has a configurable auto-off timeout using **Auto Fill Max Run Time**, default `20` minutes.
+* **Pool Purge Valve** has its own configurable auto-off timeout using **Pool Purge Max Run Time**, default `15` minutes.
+* The purge timeout exists specifically to reduce the chance of draining too much water if the purge valve is turned on and forgotten.
 
 Recommended bench test before connecting the 24V valves:
 
@@ -250,23 +256,23 @@ Use this as the final point-to-point wiring list for the whole controller.
 | :--- | :--- | :--- |
 | ESP32 `5V` | Relay board `DC+` | Powers the 5V relay board |
 | ESP32 `GND` | Relay board `DC-` | Required common ground |
-| ESP32 `GPIO16` | Relay board `IN1` | Pool Valve 1 control |
+| ESP32 `GPIO16` | Relay board `IN1` | Pool Fill Valve 1 control |
 | ESP32 `GPIO17` | Relay board `IN2` | Garden Valve 2 control |
 | ESP32 `GPIO18` | Relay board `IN3` | Garden Valve 3 control |
-| ESP32 `GPIO19` | Relay board `IN4` | Garden Valve 4 control |
+| ESP32 `GPIO19` | Relay board `IN4` | Pool Purge Valve control |
 | Relay board jumpers | `H` / high-level trigger position | Required for `inverted: false` YAML behavior |
 | 24VAC transformer hot | Relay `COM1` | Relay 1 common input |
 | 24VAC transformer hot | Relay `COM2` | Relay 2 common input |
 | 24VAC transformer hot | Relay `COM3` | Relay 3 common input |
 | 24VAC transformer hot | Relay `COM4` | Relay 4 common input |
-| Relay `NO1` | Pool Valve 1 lead A | Switched hot for autofill valve |
+| Relay `NO1` | Pool Fill Valve 1 lead A | Switched hot for autofill valve |
 | Relay `NO2` | Garden Valve 2 lead A | Switched hot for garden zone 1 |
 | Relay `NO3` | Garden Valve 3 lead A | Switched hot for garden zone 2 |
-| Relay `NO4` | Garden Valve 4 lead A | Switched hot for garden zone 3 |
-| 24VAC transformer common | Pool Valve 1 lead B | Shared common return |
+| Relay `NO4` | Pool Purge Valve lead A | Switched hot for controlled purge path |
+| 24VAC transformer common | Pool Fill Valve 1 lead B | Shared common return |
 | 24VAC transformer common | Garden Valve 2 lead B | Shared common return |
 | 24VAC transformer common | Garden Valve 3 lead B | Shared common return |
-| 24VAC transformer common | Garden Valve 4 lead B | Shared common return |
+| 24VAC transformer common | Pool Purge Valve lead B | Shared common return |
 | ESP32 `GPIO4` | DS18B20 data bus | Shared 1-Wire data line for both temp probes |
 | ESP32 `3V3` | DS18B20 VCC | Power for both temperature probes if they are 3.3V-compatible |
 | ESP32 `GND` | DS18B20 GND | Common ground for both temperature probes |
